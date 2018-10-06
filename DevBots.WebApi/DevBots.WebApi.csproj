@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\DevBots.Services\DevBots.Services.csproj" />
+    <ProjectReference Include="..\DevBots.Services\DevBots.Services.csproj" />
     <ProjectReference Include="..\DevBots.Shared\DevBots.Shared.csproj" />
   </ItemGroup>
 
