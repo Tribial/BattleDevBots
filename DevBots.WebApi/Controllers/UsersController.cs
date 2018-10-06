@@ -89,5 +89,19 @@ namespace DevBots.WebApi.Controllers
 
             return Ok(result);
         }
+
+        [AllowAnonymous]
+        [HttpPost("RefreshToken/{rToken}")]
+        public async Task<IActionResult> RefreshToken(string rToken)
+        {
+            var result = await _userService.RefreshTokens(rToken);
+
+            if (result.ErrorOccured)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }
