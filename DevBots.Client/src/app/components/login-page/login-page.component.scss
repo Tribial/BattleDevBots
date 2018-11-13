@@ -1,0 +1,58 @@
+.login-page {
+    position: absolute;
+    // .login-text {
+    //     margin-right: 30px;
+    //     margin-top: 200px;
+    // }
+
+    .login-form {
+        width: 300px;
+        border-color: indigo;
+        border-width: 2px;
+        border-style: solid;
+        padding: 20px;
+        border-radius: 20px;
+    }
+
+    form {
+        min-width: 150px;
+        max-width: 500px;
+        width: 100%;
+
+        .error-message {
+            font-size: 13px;
+            color: red;
+        }
+    }
+    
+    .full-width {
+        width: 100%;
+    }
+
+    .type-switch-container {
+        margin-left: 36px;
+        padding: 3px;
+    }
+
+    .type-switch {
+        font-size: 18px;
+    }
+
+    .type-switch:hover {
+        cursor: pointer;
+        background-color: rgba(76, 0, 130, 0.24);
+    }
+
+    .submit-button {
+        text-align: center;
+        align-content: center;
+        align-items: center;
+        margin-top: 5px;
+    }
+
+    .is-selected {
+        border-color: indigo;
+        border-width: 2px;
+        border-style: solid;
+    }
+}

@@ -71,7 +71,7 @@ namespace DevBots.Services
 
             if (user == null)
             {
-                result.Errors.Add("Something went wrong during account activation, contact the website administrators.");
+                result.Errors.Add("Your activation link is not correct");
                 return result;
             }
 
@@ -103,7 +103,8 @@ namespace DevBots.Services
                 return result;
             }
 
-            ExtensionMethods.SendEmail(user.Email, user.Username);
+            var activationUrl = _configurationService.GetValue("ActivationLink").Replace("<userGuid>", newUser.Guid);
+            ExtensionMethods.SendEmail(user.Email, user.Username, activationUrl);
 
             return result;
         }

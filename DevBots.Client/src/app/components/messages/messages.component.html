@@ -1,0 +1,5 @@
+<div class="message-container">
+    <div *ngFor="let message of messages" [@openClose]='message.duration > 0 ? "open" : "closed"' [ngClass]="message.type">
+        <span>{{message.content}}</span>
+    </div>
+</div>

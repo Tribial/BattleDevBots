@@ -9,39 +9,49 @@ import { PageNotFoundComponent } from './components/page-not-found/page-not-foun
 import { HttpClientModule } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { JwtModule } from '@auth0/angular-jwt';
+import { userReducer } from './store/reducers/user.reducer';
+import { FormsModule, ReactiveFormsModule  } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatButtonModule, MatCheckboxModule, MatIconModule, MatInputModule, MatSelectModule, MatChipsModule } from '@angular/material';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { ActivateAccountComponent } from './components/activate-account/activate-account.component';
+import { MessagesComponent } from './components/messages/messages.component';
+import { messageReducer } from './store/reducers/message.reducer';
+import { MessageService } from './services/message/message-service.service';
+import { MenuBoxComponent } from './components/partial/menu-box/menu-box.component';
 
-export function tokenGetter() {
-  var name = 'jwt_auth=';
-  var ca = document.cookie.split(';');
-  for(var i = 0; i < ca.length; i++) {
-    var c = ca[i];
-    while(c.charAt(0) == ' ') {
-      c = c.substring(1);
-    }
-    if( c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
-}
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginPageComponent,
     MainPageComponent,
-    PageNotFoundComponent  
+    PageNotFoundComponent,
+    ActivateAccountComponent,
+    MessagesComponent,
+    MenuBoxComponent
   ],
   imports: [
     HttpClientModule,
-    StoreModule.forRoot({}),
+    StoreModule.forRoot({
+      auth: userReducer,
+      messages: messageReducer
+    }),
     StoreDevtoolsModule.instrument({maxAge: 10}),
-    JwtModule.forRoot({config: {tokenGetter: tokenGetter}}),
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    FormsModule,
+    BrowserAnimationsModule,
+    MatButtonModule, 
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatChipsModule
   ],
-  providers: [],
+  providers: [CookieService, MessageService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

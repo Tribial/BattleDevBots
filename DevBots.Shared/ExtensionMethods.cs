@@ -19,7 +19,7 @@ namespace DevBots.Shared
             return crypto.Aggregate(hash, (current, theByte) => current + theByte.ToString("x2"));
         }
 
-        public static void SendEmail(string email, string username)
+        public static void SendEmail(string email, string username, string link)
         {
             SmtpClient client = new SmtpClient("smtp.gmail.com", 587);
             client.UseDefaultCredentials = false;
@@ -30,7 +30,7 @@ namespace DevBots.Shared
             mailMessage.From = new MailAddress("noreply.dev.bots@gmail.com", "DevBots noreply");
             mailMessage.To.Add(email);
             mailMessage.Body =
-                $"<h3>Confirm email</h3>Hi {username},<br />this email was registered on DevBots.pl, an online game about programming and robot fights! <br /><br /> Please confirm that this is your email! <br /> <a href=\"test.pl\">Click here to confirm and activate your account</a>. <br /><br /> If you don't tried to register on this website, then just ignore this email.<br />Thank you,<br /> DevBots automatic response";
+                $"<h3>Confirm email</h3>Hi {username},<br />this email was registered on DevBots.pl, an online game about programming and robot fights! <br /><br /> Please confirm that this is your email! <br /> <a href=\"" + link + "\">Click here to confirm and activate your account</a>. <br /><br /> If you don't tried to register on this website, then just ignore this email.<br />Thank you,<br /> DevBots automatic response";
             mailMessage.Subject = "Account activation - DevBots";
             mailMessage.IsBodyHtml = true;
             client.Send(mailMessage);

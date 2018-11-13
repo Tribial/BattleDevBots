@@ -1,3 +1,42 @@
-<p>
-  login-page works!
-</p>
+<div id="login-register-panel" class="login-page" [ngStyle]="{'top': top, 'left': left}">
+    <div class="login-form">
+        <mat-chip-list>
+            <mat-chip disabled class="type-switch-container"> 
+                <mat-chip [disabled]="isLoading" (click)="changeToLogin()" class="type-switch" [ngClass]="{'is-selected': isLoginForm}">Login</mat-chip>
+                <mat-chip [disabled]="isLoading" (click)="changeToRegister()" class="type-switch" [ngClass]="{'is-selected': !isLoginForm}">Create account</mat-chip>
+            </mat-chip>
+        </mat-chip-list>
+        <form *ngIf="isLoginForm" class="form">
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Username or email" [(ngModel)]="username" name="username">
+            </mat-form-field>
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Password" [(ngModel)]="password" name="password" type="password">
+            </mat-form-field>
+            <div class="submit-button">
+                <button [disabled]="isLoading" (click)="login()" mat-flat-button color="primary" class="full-width">Login</button>
+            </div>
+        </form>
+        <form *ngIf="!isLoginForm" class="form">
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Username" [(ngModel)]="r_username" name="username">
+            </mat-form-field>
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Email" [(ngModel)]="r_email" name="email">
+            </mat-form-field>
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Password" [(ngModel)]="r_password" name="password" type="password">
+            </mat-form-field>
+            <mat-form-field class="full-width">
+                <input [disabled]="isLoading" matInput placeholder="Confirm password" [(ngModel)]="r_c_password" name="c_password" type="password">
+            </mat-form-field>
+            <mat-form-field class="full-width">
+                <mat-hint>The master password is needed to become a Administrator. You can leave this empty</mat-hint>
+                <input [disabled]="isLoading" matInput placeholder="Mater password" [(ngModel)]="r_m_password" name="m_password" type="password">
+            </mat-form-field>
+            <div class="submit-button" style="margin-top: 15px">
+                <button [disabled]="isLoading" (click)="register()" mat-flat-button color="primary" class="full-width">Create account</button>
+            </div>
+        </form>
+    </div>
+</div>

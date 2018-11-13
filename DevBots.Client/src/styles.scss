@@ -1,1 +1,17 @@
 /* You can add global styles to this file, and also import other style files */
+@import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
+
+html, body {
+    background-color: #eeeeee;
+}
+
+.row-element-l {
+    float: left;
+}
+.row-element-r {
+    float: right;
+}
+
+.last-row-element {
+    clear: both;
+}
