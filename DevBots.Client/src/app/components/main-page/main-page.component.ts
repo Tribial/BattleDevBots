@@ -1,10 +1,11 @@
 import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { GridItem } from 'src/app/models/gridItem.model';
-import { MatGridList } from '@angular/material';
+import { MatGridList, MatIconRegistry } from '@angular/material';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { HttpService } from 'src/app/services/http/http.service';
 import { Subscription } from 'rxjs';
 import { MessageService } from 'src/app/services/message/message-service.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-main-page',
@@ -21,6 +22,10 @@ export class MainPageComponent implements OnInit, OnDestroy {
     },
     {
       id: 1,
+      name: 'settings',
+    },
+    {
+      id: 2,
       name: 'logout',
     },
   ];
@@ -96,8 +101,11 @@ export class MainPageComponent implements OnInit, OnDestroy {
     },
   ];
 
-  constructor(private _auth: AuthService, private _http: HttpService, private _messageService: MessageService) {
+    constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer, private _auth: AuthService, private _http: HttpService, private _messageService: MessageService) {
     this.setFirstAvailableGridItemAsActivated()
+    iconRegistry.addSvgIcon(
+      'settings',
+      sanitizer.bypassSecurityTrustResourceUrl('../../../assets/icons/settings.svg'));
   }
 
 
@@ -115,6 +123,11 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   changeSelecetdGrid(index: number) {
+    if(this._keyFocusOn === 'panel') {
+      this.setFirstAvailableGridItemAsActivated();
+      this.buttonFocused = '';
+      this._keyFocusOn = 'grid';
+    }
     if(this.isWaiting) {
       return;
     }
@@ -130,6 +143,16 @@ export class MainPageComponent implements OnInit, OnDestroy {
     this.gridList[index].activated = true;
     this.currentDescription = this.gridList[index].description;
     return 'done';
+  }
+
+  selectBottomButton(name: string) {
+    if(this._keyFocusOn === 'grid') {
+      this.gridList.forEach(item => item.activated = false);
+      this.currentDescription = '';
+      this.buttonFocused = this._bottomButtons[0].name;
+      this._keyFocusOn = 'panel';
+    }
+    this.buttonFocused = name;
   }
 
   @HostListener('document:keydown', ['$event']) 

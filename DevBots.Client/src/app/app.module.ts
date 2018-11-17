@@ -18,6 +18,7 @@ import { ActivateAccountComponent } from './components/activate-account/activate
 import { MessagesComponent } from './components/messages/messages.component';
 import { messageReducer } from './store/reducers/message.reducer';
 import { MessageService } from './services/message/message-service.service';
+import { NotificationsComponent } from './components/modal-windows/notifications/notifications.component';
 
 
 @NgModule({
@@ -28,6 +29,7 @@ import { MessageService } from './services/message/message-service.service';
     PageNotFoundComponent,
     ActivateAccountComponent,
     MessagesComponent,
+    NotificationsComponent,
   ],
   imports: [
     HttpClientModule,

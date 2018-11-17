@@ -23,6 +23,10 @@
         bottom: 25px;
     }
 
+    .logout-button:hover {
+        cursor: pointer;
+    }
+
     .notification-button {
         padding: 10px;
         padding-left: 30px;
@@ -31,6 +35,17 @@
         position: absolute;
         left: 25px;
         bottom: 25px;
+    }
+
+    .notification-button:hover {
+        cursor: pointer;
+    }
+
+    .settings-button {
+        position: absolute;
+        left: 267px;
+        bottom: 25px;
+        background-color: #e0e0e0;
     }
 
     .selected {

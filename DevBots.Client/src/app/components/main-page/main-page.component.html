@@ -1,4 +1,5 @@
 <div class="main-page-container">
+    <app-notifications></app-notifications>
     <mat-grid-list cols="3" rowHeight="fit" class="grid-container">
         <mat-grid-tile 
         *ngFor="let gridItem of gridList, index as index"
@@ -12,10 +13,29 @@
     <mat-progress-bar *ngIf="isWaiting" style="margin-top: 5px;" mode="query"></mat-progress-bar>
     <div class="grid-item-hint">{{currentDescription}}</div>
     <mat-chip-list>
-        <mat-chip class="notification-button" (click)='logout()' [ngClass]="{'selected': buttonFocused === 'notification'}">Notifications</mat-chip>
+        <mat-chip 
+        (mouseenter)="selectBottomButton('notification')" 
+        class="notification-button" 
+        (click)='logout()' 
+        [ngClass]="{'selected': buttonFocused === 'notification'}">
+            Notifications
+        </mat-chip>
     </mat-chip-list>
+    <button 
+    class='settings-button' 
+    mat-icon-button 
+    (mouseenter)="selectBottomButton('settings')" 
+    [ngClass]="{'selected': buttonFocused === 'settings'}">
+        <mat-icon svgIcon="settings"></mat-icon>
+    </button>
     <div class="logo-bottom"></div>
     <mat-chip-list>
-        <mat-chip class="logout-button" (click)='logout()' [ngClass]="{'selected': buttonFocused === 'logout'}">Logout</mat-chip>
+        <mat-chip 
+        (mouseenter)="selectBottomButton('logout')" 
+        class="logout-button" 
+        (click)='logout()' 
+        [ngClass]="{'selected': buttonFocused === 'logout'}">
+            Logout
+        </mat-chip>
     </mat-chip-list>
 </div>
