@@ -1,8 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
 @import "~@angular/material/prebuilt-themes/deeppurple-amber.css";
+@import url('https://fonts.googleapis.com/css?family=Allerta+Stencil');
 
 html, body {
     background-color: #eeeeee;
+    min-width: 700px;
+    min-height: 400px;
+    font-family: 'Allerta Stencil', sans-serif;
+}
+
+input {
+    font-family: 'Allerta Stencil', sans-serif;
+}
+button {
+    font-family: 'Allerta Stencil', sans-serif;
 }
 
 .row-element-l {

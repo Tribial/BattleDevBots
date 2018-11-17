@@ -20,6 +20,7 @@ namespace DevBots.Data.DataAccess
         public DbSet<Script> Scripts { get; set; }
         public DbSet<Skill> Skills { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<AccountSettings> AccountSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -37,6 +38,9 @@ namespace DevBots.Data.DataAccess
             builder.Entity<Player>()
                 .HasMany(e => e.Scripts)
                 .WithOne(e => e.Owner);
+
+            builder.Entity<AccountSettings>()
+                .HasKey(e => e.UserId);
 
             builder.Entity<Robot>()
                 .HasKey(e => e.Id);

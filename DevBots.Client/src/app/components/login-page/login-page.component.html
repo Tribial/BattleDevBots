@@ -1,4 +1,5 @@
 <div id="login-register-panel" class="login-page" [ngStyle]="{'top': top, 'left': left}">
+    <mat-progress-bar *ngIf="isLoading" class="progress-bar" mode="query"></mat-progress-bar>
     <div class="login-form">
         <mat-chip-list>
             <mat-chip disabled class="type-switch-container"> 

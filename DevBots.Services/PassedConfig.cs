@@ -20,6 +20,8 @@ namespace DevBots.Services
 
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<ITokenRepository, TokenRepository>();
+            services.AddTransient<IPlayerRepository, PlayerRepository>();
+            services.AddTransient<ISettingsRepository, SettingsRepository>();
 
             AutoMapperConfiguration();
         }

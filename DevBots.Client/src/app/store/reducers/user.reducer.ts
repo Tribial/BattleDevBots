@@ -19,12 +19,12 @@ const initialState: LoginModel = {
 }
 
 export function userReducer(state: LoginModel = initialState, action: UserActions.Actions) {
-
-    // Section 3
     switch(action.type) {
         case UserActions.SET_TOKEN:
             return action.payload;
         default:
             return state;
+        case UserActions.REMOVE_TOKEN:
+            return initialState;
     }
 }

@@ -1,61 +1,21 @@
 <div class="main-page-container">
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="last-row-element"></div>
-    
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="last-row-element"></div>
-    
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="row-element-l menu-box-container">
-        <app-menu-box 
-            (disabled)="true"
-            (activated)="false">
-        </app-menu-box>
-    </div>
-    <div class="last-row-element"></div>
+    <mat-grid-list cols="3" rowHeight="fit" class="grid-container">
+        <mat-grid-tile 
+        *ngFor="let gridItem of gridList, index as index"
+        [ngClass]="gridItem.disabled ? 'disabled-grid-item' : (gridItem.activated ? 'activated-grid-item' : 'default-grid-item')" 
+        class="grid-item"
+        (mouseenter)="changeSelecetdGrid(index)"
+        (click)="gridItem.disabled ? null : onEnterPress()">
+            <h2>{{gridItem.title}}</h2>
+        </mat-grid-tile>
+    </mat-grid-list>
+    <mat-progress-bar *ngIf="isWaiting" style="margin-top: 5px;" mode="query"></mat-progress-bar>
+    <div class="grid-item-hint">{{currentDescription}}</div>
+    <mat-chip-list>
+        <mat-chip class="notification-button" (click)='logout()' [ngClass]="{'selected': buttonFocused === 'notification'}">Notifications</mat-chip>
+    </mat-chip-list>
+    <div class="logo-bottom"></div>
+    <mat-chip-list>
+        <mat-chip class="logout-button" (click)='logout()' [ngClass]="{'selected': buttonFocused === 'logout'}">Logout</mat-chip>
+    </mat-chip-list>
 </div>

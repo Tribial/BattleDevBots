@@ -82,9 +82,10 @@ namespace DevBots.WebApi
             {
                 app.UseDeveloperExceptionPage();
                 app.UseCors(corsPolicyBuilder =>
-                    corsPolicyBuilder.WithOrigins("*")
+                    corsPolicyBuilder
                         .AllowAnyMethod()
                         .AllowAnyHeader()
+                        .AllowAnyOrigin()
                 );
             }
             else

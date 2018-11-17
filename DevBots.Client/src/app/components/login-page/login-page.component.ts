@@ -149,8 +149,8 @@ export class LoginPageComponent implements OnInit {
           this.response = data;
           this.user_auth = this.response.model;
           this._store.dispatch(new AuthActions.SetToken(this.user_auth));
-          this._cookieService.set('jwt_auth', this.user_auth.tokens.token);
-          this._cookieService.set('r_jwt_auth', this.user_auth.tokens.refreshToken);
+          this._cookieService.set('jwt_auth', this.user_auth.tokens.token, undefined, '/');
+          this._cookieService.set('r_jwt_auth', this.user_auth.tokens.refreshToken, undefined, '/');
           this.isLoading = false;
           this.checkAuth();
         },

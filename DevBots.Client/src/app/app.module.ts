@@ -12,13 +12,12 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { userReducer } from './store/reducers/user.reducer';
 import { FormsModule, ReactiveFormsModule  } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatButtonModule, MatCheckboxModule, MatIconModule, MatInputModule, MatSelectModule, MatChipsModule } from '@angular/material';
+import { MatButtonModule, MatProgressBarModule, MatCheckboxModule, MatIconModule, MatInputModule, MatSelectModule, MatChipsModule, MatGridListModule, MatProgressSpinnerModule } from '@angular/material';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ActivateAccountComponent } from './components/activate-account/activate-account.component';
 import { MessagesComponent } from './components/messages/messages.component';
 import { messageReducer } from './store/reducers/message.reducer';
 import { MessageService } from './services/message/message-service.service';
-import { MenuBoxComponent } from './components/partial/menu-box/menu-box.component';
 
 
 @NgModule({
@@ -29,13 +28,12 @@ import { MenuBoxComponent } from './components/partial/menu-box/menu-box.compone
     PageNotFoundComponent,
     ActivateAccountComponent,
     MessagesComponent,
-    MenuBoxComponent
   ],
   imports: [
     HttpClientModule,
     StoreModule.forRoot({
       auth: userReducer,
-      messages: messageReducer
+      messages: messageReducer,
     }),
     StoreDevtoolsModule.instrument({maxAge: 10}),
     BrowserModule,
@@ -49,7 +47,10 @@ import { MenuBoxComponent } from './components/partial/menu-box/menu-box.compone
     MatInputModule,
     ReactiveFormsModule,
     MatSelectModule,
-    MatChipsModule
+    MatChipsModule,
+    MatGridListModule,
+    MatProgressSpinnerModule,
+    MatProgressBarModule
   ],
   providers: [CookieService, MessageService],
   bootstrap: [AppComponent]

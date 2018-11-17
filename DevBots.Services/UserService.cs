@@ -22,12 +22,16 @@ namespace DevBots.Services
         private readonly IConfigurationService _configurationService;
         private readonly IUserRepository _userRepository;
         private readonly ITokenRepository _tokenRepository;
+        private readonly IPlayerRepository _playerRepository;
+        private readonly ISettingsRepository _settingsRepository;
 
-        public UserService(IConfigurationService configuration, IUserRepository userRepository, ITokenRepository tokenRepository)
+        public UserService(IConfigurationService configuration, IUserRepository userRepository, ITokenRepository tokenRepository, IPlayerRepository playerRepository, ISettingsRepository settingsRepository)
         {
             _configurationService = configuration;
             _userRepository = userRepository;
             _tokenRepository = tokenRepository;
+            _playerRepository = playerRepository;
+            _settingsRepository = settingsRepository;
         }
 
         public async Task<Response<BaseDto>> RegisterUser(RegisterUserBindingModel user)
@@ -55,7 +59,7 @@ namespace DevBots.Services
             var currentMasterPassword = _configurationService.GetValue("MasterPassword");
             if (currentMasterPassword == user.MasterPassword)
             {
-                result = await CreateAdministrator(user);
+                result = await CreateUser(user);
             }
             else
             {
@@ -97,6 +101,34 @@ namespace DevBots.Services
 
             var insertResult = await _userRepository.Insert(newUser);
 
+            if (!insertResult)
+            {
+                result.Errors.Add("Something went horribly wrong. Please try again later.");
+                return result;
+            }
+
+            var addedUser = _userRepository.Get(u => u.Email == user.Email);
+            var player = new Player
+            {
+                Id = addedUser.Id,
+                Matches = new List<Match>(),
+                Scripts = new List<Script>(),
+            };
+
+            insertResult = await _playerRepository.InsertAsync(player);
+            if (!insertResult)
+            {
+                result.Errors.Add("Something went horribly wrong. Please try again later.");
+                return result;
+            }
+
+            var settings = new AccountSettings
+            {
+                MouseEnabled = true,
+                Theme = "default",
+                UserId = addedUser.Id,
+            };
+            insertResult = await _settingsRepository.InsertAsync(settings);
             if (!insertResult)
             {
                 result.Errors.Add("Something went horribly wrong. Please try again later.");

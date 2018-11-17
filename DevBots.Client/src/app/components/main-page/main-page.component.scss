@@ -7,9 +7,79 @@
     width: 100%;
     height: 100%;
 
-    .menu-box-container {
-        position: relative;
-        width: calc(100% / 3);
-        height: calc(100% / 3);
+    .grid-item-hint {
+        color: #999999;
+        width: 100%;
+        text-align: center;
+    }
+
+    .logout-button {
+        padding: 10px;
+        padding-left: 30px;
+        padding-right: 30px; 
+        font-size: 24px;
+        position: absolute;
+        right: 25px;
+        bottom: 25px;
+    }
+
+    .notification-button {
+        padding: 10px;
+        padding-left: 30px;
+        padding-right: 30px; 
+        font-size: 24px;
+        position: absolute;
+        left: 25px;
+        bottom: 25px;
+    }
+
+    .selected {
+        color: #999999;
+        background-color: indigo;
+    }
+
+    .logo-bottom {
+        position: absolute;
+        bottom: 5px;
+        width: 115px;
+        height: 75px;
+        left: calc(50% - 57.5px);
+        background-image: url('../../../assets/images/logo.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center center;   
+    }
+
+    .grid-container {
+        height: calc(100% - 100px);
+        width: calc(100% - 2px);
+        .grid-item {
+            border-width: 1px;
+            border-style: solid;
+            border-color: indigo;
+            -moz-box-shadow:    inset 0 0 50px indigo;
+            -webkit-box-shadow: inset 0 0 50px indigo;
+            box-shadow:         inset 0 0 50px indigo;
+        }
+
+        .grid-item:hover {
+            cursor: pointer;
+        }
+
+        .disabled-grid-item {
+            background-color: lightcoral;
+        }
+
+        .disabled-grid-item:hover {
+            cursor: default;
+        }
+
+        .activated-grid-item {
+            border-style: solid;
+            background-color: lightgreen;
+        }
+
+        .default-grid-item {
+        }
     }
 }

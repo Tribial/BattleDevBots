@@ -12,7 +12,7 @@ export class SetToken implements Action {
 
 export class RemoveToken implements Action {
     readonly type = REMOVE_TOKEN;
-    constructor(public payload: number) {}
+    constructor() {}
 }
 
 export type Actions = SetToken | RemoveToken;
