@@ -36,6 +36,7 @@ namespace DevBots.WebApi
 
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IConfigurationService, ConfigurationService>();
+            services.AddTransient<ILanguageService, LanguageService>();
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             services

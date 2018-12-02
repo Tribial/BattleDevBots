@@ -14,6 +14,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 })
 export class MainPageComponent implements OnInit, OnDestroy {
 
+  private _toggleBetween: string[] = ['grid', 'panel'];
   private _keyFocusOn: string = 'grid';
   private _bottomButtons: {id: number, name: string}[] = [
     {
@@ -35,6 +36,8 @@ export class MainPageComponent implements OnInit, OnDestroy {
   public buttonFocused: string = '';
   public mouseEnabled: boolean;
   public currentDescription = '';
+  public showNotification: boolean = false;
+  public notificationSelected: number = -1;
   public gridList: GridItem[] = [
     {
       id: 0,
@@ -122,6 +125,18 @@ export class MainPageComponent implements OnInit, OnDestroy {
     }
   }
 
+  toggleNotification() {
+    this.showNotification = ! this.showNotification;
+    if(this.showNotification) {
+      this._toggleBetween[0] = 'notification';
+      this.onTagPress();
+    } else {
+      this._toggleBetween[0] = 'grid';
+      this._keyFocusOn = this._toggleBetween[1];
+      this.notificationSelected = -1;
+    }
+  }
+
   changeSelecetdGrid(index: number) {
     if(this._keyFocusOn === 'panel') {
       this.setFirstAvailableGridItemAsActivated();
@@ -146,10 +161,10 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   selectBottomButton(name: string) {
-    if(this._keyFocusOn === 'grid') {
+    if(this._keyFocusOn === this._toggleBetween[0]) {
       this.gridList.forEach(item => item.activated = false);
       this.currentDescription = '';
-      this.buttonFocused = this._bottomButtons[0].name;
+      this.buttonFocused = this._bottomButtons[1].name;
       this._keyFocusOn = 'panel';
     }
     this.buttonFocused = name;
@@ -176,7 +191,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
 
         result = this.changeSelecetdGrid(itemIndex);
       }
-    } else {
+    } else if(this._keyFocusOn === 'panel') {
       let itemIndex = this._bottomButtons.find(b => b.name === this.buttonFocused).id;
       if (event.keyCode === 37) {
         itemIndex -= 1;
@@ -190,6 +205,12 @@ export class MainPageComponent implements OnInit, OnDestroy {
         }
       }
       this.buttonFocused = this._bottomButtons[itemIndex].name;
+    } else if(this._keyFocusOn === 'notification') {
+      if(event.keyCode === 38) {
+        this.notificationSelected -= 1;
+      } else if (event.keyCode === 40) {
+        this.notificationSelected += 1;
+      }
     }
     
   }
@@ -205,15 +226,17 @@ export class MainPageComponent implements OnInit, OnDestroy {
           alert(item.title);
         }
       });
-    } else {
+    } else if(this._keyFocusOn === 'panel') {
       switch(this.buttonFocused) {
         case 'notification':
-          alert('NOTIFICATIONS');
+          this.toggleNotification();
           break;
         case 'logout':
           this.logout();
           break;
       }
+    } else if(this._keyFocusOn === 'notification') {
+
     }
   }
   @HostListener('document:keydown.tab', ['$event'])
@@ -221,15 +244,26 @@ export class MainPageComponent implements OnInit, OnDestroy {
     if(this.isWaiting) {
       return;
     }
-    if(this._keyFocusOn === 'grid') {
+    if(this._keyFocusOn === this._toggleBetween[0]) {
+      this._keyFocusOn = this._toggleBetween[1]
+    } else {
+      this._keyFocusOn = this._toggleBetween[0];
+    }
+    if(this._keyFocusOn === 'panel') {
+      this.notificationSelected = -1;
       this.gridList.forEach(item => item.activated = false);
       this.currentDescription = '';
       this.buttonFocused = this._bottomButtons[0].name;
-      this._keyFocusOn = 'panel';
-    } else {
+      this._keyFocusOn = this._toggleBetween[1];
+    } else if(this._keyFocusOn === 'grid'){
       this.setFirstAvailableGridItemAsActivated();
+      this.notificationSelected = -1;
       this.buttonFocused = '';
-      this._keyFocusOn = 'grid';
+      this._keyFocusOn = this._toggleBetween[0];
+    } else if(this._keyFocusOn === 'notification') {
+      this.gridList.forEach(item => item.activated = false);
+      this.buttonFocused = '';
+      this.notificationSelected = 0;
     }
     return false;
   }

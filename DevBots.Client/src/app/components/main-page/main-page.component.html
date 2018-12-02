@@ -1,5 +1,5 @@
 <div class="main-page-container">
-    <app-notifications></app-notifications>
+    <app-notifications *ngIf="showNotification" (close)='toggleNotification()' (setNotification)='notificationSelected = $event' [notificationSelected]='notificationSelected'></app-notifications>
     <mat-grid-list cols="3" rowHeight="fit" class="grid-container">
         <mat-grid-tile 
         *ngFor="let gridItem of gridList, index as index"
@@ -16,7 +16,7 @@
         <mat-chip 
         (mouseenter)="selectBottomButton('notification')" 
         class="notification-button" 
-        (click)='logout()' 
+        (click)='toggleNotification()' 
         [ngClass]="{'selected': buttonFocused === 'notification'}">
             Notifications
         </mat-chip>

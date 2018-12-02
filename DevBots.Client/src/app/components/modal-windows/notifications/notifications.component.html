@@ -1,5 +1,5 @@
 <div class='notifications-container'>
-  <div class='notification' *ngFor="let notification of notifications">
+  <div class='notification' *ngFor="let notification of notifications, index as index" [ngClass]="{'selected': notificationSelected === index}"x>
     <h3>{{notification.title}}</h3>
     <div class='notification-body'>{{notification.body}}</div>
   </div>

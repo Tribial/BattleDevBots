@@ -8,7 +8,9 @@
     background-color: #eeeeee;
     min-width: 320px;
     padding: 10px;
+    padding-bottom: 20px;
     border-radius: 5px;
+    overflow: auto;
 
     .notification {
         position: relative;
@@ -26,6 +28,18 @@
 
         .notification-body {
             color: #333333;
+        }
+    }
+
+    .selected {
+        background-color: indigo !important;
+
+        h3 {
+            color: #eeeeee !important;
+        }
+
+        .notification-body {
+            color: #cccccc !important;
         }
     }
 }
