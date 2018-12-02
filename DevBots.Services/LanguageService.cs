@@ -46,8 +46,25 @@ namespace DevBots.Services
             var result = new List<RobotCommand>();
             var tokenGroups = new List<List<Token>>();
             var tokenGroup = new List<Token>();
+            var expectEndIf = 0;
             foreach (var token in tokens)
             {
+                if (token.Type == Types.IF)
+                {
+                    expectEndIf++;
+                }
+                else if (token.Type == Types.ENDIF)
+                {
+                    expectEndIf--;
+                    if (expectEndIf < 0)
+                    {
+                        result.Add(new RobotCommand
+                        {
+                            Error = "An ENDIF can't be before an IF"
+                        });
+                        return result;
+                    }
+                }
                 if (token.Type != Types.NEWLINE)
                 {
                     tokenGroup.Add(token);
@@ -59,8 +76,39 @@ namespace DevBots.Services
                 }
             }
 
+            if (expectEndIf != 0)
+            {
+                result.Add(new RobotCommand
+                {
+                    Error = "Each IF should end with and ENDIF"
+                });
+                return result;
+            }
+
+            var shouldDo = new List<bool> {true};
+
             foreach (var tGroup in tokenGroups)
             {
+                if (tGroup.ElementAt(0).Type == Types.IF)
+                {
+                    shouldDo.Add(shouldDo.Last());
+                } 
+                switch (tGroup.Count)
+                {
+                    case 1 when tGroup.First().Type == Types.ENDIF:
+                        shouldDo.RemoveAt(shouldDo.Count - 1);
+                        continue;
+                    case 1 when tGroup.First().Type == Types.ELSE:
+                        var last = shouldDo.Last();
+                        shouldDo.RemoveAt(shouldDo.Count - 1);
+                        shouldDo.Add(!last);
+                        continue;
+                }
+
+                if (shouldDo.Any(s => !s))
+                {
+                    continue;
+                }
                 var index = 0;
                 var groupLength = tGroup.Count;
                 _print("Token Group-----------------------------------");
@@ -70,7 +118,71 @@ namespace DevBots.Services
                     index++;
                 }
 
-                if (tGroup.ElementAt(0).Type == Types.PRINT)
+                if (tGroup.ElementAt(0).Type == Types.IF && tGroup.Last().Type == Types.THEN)
+                {
+                    var conditions = tGroup.GetRange(1, tGroup.Count - 2);
+                    if (conditions.Count == 1)
+                    {
+                        var condition = conditions.First();
+                        if (condition.Type == Types.BOOLEAN)
+                        {
+                            shouldDo.RemoveAt(shouldDo.Count - 1);
+                            shouldDo.Add(condition.Value == "TRUE");
+                        }
+                        else if (condition.Type == Types.UNDEFINED)
+                        {
+                            _variables.TryGetValue(condition.Value, out var value);
+                            if (value == null)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"Undefined variable at line {condition.LineNumber}"
+                                });
+                                return result;
+                            }
+
+                            if (_types[condition.Value] == "BOOLEAN")
+                            {
+                                shouldDo.RemoveAt(shouldDo.Count - 1);
+                                shouldDo.Add(value == "TRUE");
+                            }
+                            else
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"At line {condition.LineNumber}. IF statement accepts only BOOLEAN"
+                                });
+                                return result;
+                            }
+                        }
+                        else
+                        {
+                            result.Add(new RobotCommand
+                            {
+                                Error = $"At line {condition.LineNumber}. IF statement accepts only BOOLEAN"
+                            });
+                            return result;
+                        }
+                    }
+                    else
+                    {
+                        if (conditions.Any(c => c.Type == Types.COMPARE))
+                        {
+                            var res = _resolveBoolean(conditions);
+                            if (res == null)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"An error occured at line {conditions.First().LineNumber}"
+                                });
+                                return result;
+                            }
+                            shouldDo.RemoveAt(shouldDo.Count - 1);
+                            shouldDo.Add(res == true);
+                        }
+                    }
+                }
+                else if (tGroup.ElementAt(0).Type == Types.PRINT)
                 {
                     if (groupLength == 2)
                     {
@@ -99,6 +211,7 @@ namespace DevBots.Services
                                     {
                                         Error = $"Variable {tGroup.ElementAt(1).Value} is unassigned"
                                     });
+                                    return result;
                                 }
                                 else
                                 {
@@ -114,6 +227,7 @@ namespace DevBots.Services
                                 {
                                     Error = $"Type {tGroup.ElementAt(1).Type.ToString()} is not a valid type at line {tGroup.ElementAt(0).LineNumber}",
                                 });
+                                return result;
                             }
                         }
                     }
@@ -164,8 +278,9 @@ namespace DevBots.Services
                                     Error = $"At line {tGroup.ElementAt(0).LineNumber} NOT can be used on BOOLEAN only"
                                 });
                             }
+                            return result;
                         }
-                        else if (tGroup.Count(t => t.Type == Types.ISEQUAL) == 1)
+                        else if (tGroup.Count(t => t.Type == Types.COMPARE) == 1)
                         {
                             var boolean = _resolveBoolean(tGroup.GetRange(1, tGroup.Count - 1));
                             switch (boolean)
@@ -175,7 +290,7 @@ namespace DevBots.Services
                                     {
                                         Error = $"An error occured in line {tGroup.ElementAt(0).LineNumber}"
                                     });
-                                    break;
+                                    return result;
                                 case true:
                                     result.Add(new RobotCommand()
                                     {
@@ -219,6 +334,7 @@ namespace DevBots.Services
                                 {
                                     Error = $"An error occured in line {tGroup.ElementAt(0).LineNumber}"
                                 });
+                                return result;
                             }
                         }
                         else
@@ -227,6 +343,7 @@ namespace DevBots.Services
                             {
                                 Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}"
                             });
+                            return result;
                         }
                     }
                 }
@@ -296,7 +413,7 @@ namespace DevBots.Services
                                 _types[tGroup.ElementAt(1).Value] = "BOOLEAN";
                             }
                         }
-                        else if (tGroup.Count(t => t.Type == Types.ISEQUAL) == 1)
+                        else if (tGroup.Count(t => t.Type == Types.COMPARE) == 1)
                         {
                             var boolean = _resolveBoolean(tGroup.GetRange(3, tGroup.Count - 3));
                             switch (boolean)
@@ -494,7 +611,57 @@ namespace DevBots.Services
                                 {
                                     Index = tokens.Count,
                                     LineNumber = lineNumber,
-                                    Type = Types.ISEQUAL,
+                                    Type = Types.COMPARE,
+                                    Value = word
+                                });
+                            break;
+                        case "!=":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.COMPARE,
+                                    Value = word
+                                });
+                            break;
+                        case "<":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.COMPARE,
+                                    Value = word
+                                });
+                            break;
+                        case ">":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.COMPARE,
+                                    Value = word
+                                });
+                            break;
+                        case ">=":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.COMPARE,
+                                    Value = word
+                                });
+                            break;
+                        case "<=":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.COMPARE,
                                     Value = word
                                 });
                             break;
@@ -528,9 +695,49 @@ namespace DevBots.Services
                                     Value = word
                                 });
                             break;
+                        case "IF":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.IF,
+                                    Value = word
+                                });
+                            break;
+                        case "ELSE":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.ELSE,
+                                    Value = word
+                                });
+                            break;
+                        case "THEN":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.THEN,
+                                    Value = word
+                                });
+                            break;
+                        case "ENDIF":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.ENDIF,
+                                    Value = word
+                                });
+                            break;
                         default:
                         {
-                            if (Regex.IsMatch(word, "\\d"))
+                            if (Regex.IsMatch(word, "^\\d"))
                             {
                                 if(Regex.IsMatch(word, @"[\+\-\*\(\)\\]"))
                                 {
@@ -591,6 +798,7 @@ namespace DevBots.Services
 
         private bool? _resolveBoolean(IEnumerable<Token> tokens)
         {
+            var compareType = "";
             var leftSide = new List<Token>();
             var leftValue = new Token();
             var rightSide = new List<Token>();
@@ -598,9 +806,10 @@ namespace DevBots.Services
             var isLeft = true;
             foreach (var token in tokens)
             {
-                if (token.Type == Types.ISEQUAL)
+                if (token.Type == Types.COMPARE)
                 {
                     isLeft = false;
+                    compareType = token.Value;
                 }
                 else if (isLeft)
                 {
@@ -764,7 +973,37 @@ namespace DevBots.Services
                 return false;
             }
 
-            return leftValue.Value == rightValue.Value;
+            if (leftValue.Type == Types.STRING || leftValue.Type == Types.BOOLEAN)
+            {
+                switch (compareType)
+                {
+                    case "==":
+                        return leftValue.Value == rightValue.Value;
+                    case "!=":
+                        return leftValue.Value != rightValue.Value;
+                    default:
+                        return null;
+                }
+            }
+
+            switch (compareType)
+            {
+                case "==":
+                    return leftValue.Value == rightValue.Value;
+                case "<":
+                    return Convert.ToInt32(leftValue.Value) < Convert.ToInt32(rightValue.Value);
+                case ">":
+                    return Convert.ToInt32(leftValue.Value) > Convert.ToInt32(rightValue.Value);
+                case "<=":
+                    return Convert.ToInt32(leftValue.Value) <= Convert.ToInt32(rightValue.Value);
+                case ">=":
+                    return Convert.ToInt32(leftValue.Value) >= Convert.ToInt32(rightValue.Value);
+                case "!=":
+                    return Convert.ToInt32(leftValue.Value) != Convert.ToInt32(rightValue.Value);
+                default:
+                    return null;
+            }
+
         }
 
         private static void _print(Token token)

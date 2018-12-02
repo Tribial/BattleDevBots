@@ -1,5 +1,10 @@
-LET fab = "Fabian"
-IF TRUE THEN
-LET fab = fab + " Domurad"
+LET a = 5
+LET b = 1
+PRINT "TEST1"
+IF FALSE THEN
+	PRINT "TEST2"
+	IF TRUE THEN
+		PRINT "TEST3"
+	ENDIF
 ENDIF
-PRINT fab
+PRINT "TEST4"
