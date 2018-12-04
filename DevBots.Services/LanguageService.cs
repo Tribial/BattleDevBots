@@ -9,7 +9,7 @@ using System.Xml.Xsl;
 using DevBots.Services.Interfaces;
 using DevBots.Shared.DtoModels;
 using DevBots.Shared.Enums;
-using Microsoft.AspNetCore.Hosting;
+//using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore.Internal;
 
 namespace DevBots.Services
@@ -164,6 +164,43 @@ namespace DevBots.Services
                             return result;
                         }
                     }
+                    else if (conditions.Count == 2)
+                    {
+                        if (conditions.ElementAt(0).Type == Types.NOT)
+                        {
+                            if (conditions.ElementAt(1).Type == Types.BOOLEAN)
+                            {
+                                shouldDo.RemoveAt(shouldDo.Count - 1);
+                                shouldDo.Add(conditions.ElementAt(1).Value != "TRUE");
+                            }
+                            else if (conditions.ElementAt(1).Type == Types.UNDEFINED)
+                            {
+                                _variables.TryGetValue(conditions.ElementAt(1).Value, out var value);
+                                if (value == null)
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"Undefined variable at line {conditions.ElementAt(1).LineNumber}"
+                                    });
+                                    return result;
+                                }
+
+                                if (_types[conditions.ElementAt(1).Value] == "BOOLEAN")
+                                {
+                                    shouldDo.RemoveAt(shouldDo.Count - 1);
+                                    shouldDo.Add(value != "TRUE");
+                                }
+                                else
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"At line {conditions.ElementAt(1).LineNumber}. IF statement accepts only BOOLEAN"
+                                    });
+                                    return result;
+                                }
+                            }
+                        }
+                    }
                     else
                     {
                         if (conditions.Any(c => c.Type == Types.COMPARE))
@@ -188,10 +225,22 @@ namespace DevBots.Services
                     {
                         if (tGroup.ElementAt(1).Type == Types.EXPRESSION)
                         {
-                            result.Add(new RobotCommand
+                            try
                             {
-                                Console = _evaluateExpression(tGroup.ElementAt(1).Value).ToString(),
-                            });
+                                var res = _evaluateExpression(tGroup.ElementAt(1).Value).ToString();
+                                result.Add(new RobotCommand
+                                {
+                                    Console = _evaluateExpression(tGroup.ElementAt(1).Value).ToString(),
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"An error occured while processing the expression on line {tGroup.ElementAt(1).LineNumber}",
+                                });
+                            }
+                            
                         }
                         else
                         {
@@ -307,13 +356,24 @@ namespace DevBots.Services
                         }
                         else if (tGroup.Count(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER) == tGroup.Count - 1)
                         {
-                            var res = _evaluateExpression(tGroup
-                                .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
-                                .Join(""));
-                            result.Add(new RobotCommand()
+                            try
                             {
-                                Console = res.ToString(),
-                            });
+                                var res = _evaluateExpression(tGroup
+                                    .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER)
+                                    .Select(t => t.Value)
+                                    .Join(""));
+                                result.Add(new RobotCommand()
+                                {
+                                    Console = res.ToString(),
+                                });
+                            }
+                            catch (Exception e)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"An error occured while processing the expression on line {tGroup.ElementAt(0).LineNumber}",
+                                });
+                            }
                         }
                         else if (tGroup.Count(t => t.Type == Types.STRING || t.Type == Types.NUMBER || t.Type == Types.EXPRESSION || t.Type == Types.BOOLEAN || t.Type == Types.NOT) ==
                             tGroup.Count - 1)
@@ -436,11 +496,23 @@ namespace DevBots.Services
                         }
                         else if (tGroup.Count(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER) == tGroup.Count - 3)
                         {
-                            var res = _evaluateExpression(tGroup
-                                .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
-                                .Join(""));
-                            _variables[tGroup.ElementAt(1).Value] = res.ToString();
-                            _types[tGroup.ElementAt(1).Value] = "NUMBER";
+                            try
+                            {
+                                var res = _evaluateExpression(tGroup
+                                    .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER)
+                                    .Select(t => t.Value)
+                                    .Join(""));
+                                _variables[tGroup.ElementAt(1).Value] = res.ToString();
+                                _types[tGroup.ElementAt(1).Value] = "NUMBER";
+
+                            }
+                            catch (Exception e)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"An error occured while processing the expression on line {tGroup.ElementAt(1).LineNumber}",
+                                });
+                            }
                         }
                         else if (tGroup.Count(t => t.Type == Types.STRING || t.Type == Types.NUMBER || t.Type == Types.EXPRESSION || t.Type == Types.BOOLEAN || t.Type == Types.NOT) ==
                                  tGroup.Count - 3)
@@ -739,7 +811,7 @@ namespace DevBots.Services
                         {
                             if (Regex.IsMatch(word, "^\\d"))
                             {
-                                if(Regex.IsMatch(word, @"[\+\-\*\(\)\\]"))
+                                if(Regex.IsMatch(word, @"[\+\-\*\(\)\/]"))
                                 {
                                     tokens.Add(
                                         new Token
@@ -762,7 +834,7 @@ namespace DevBots.Services
                                         });
                                 }
                             }
-                            else if (Regex.IsMatch(word, @"[\+\-\*\(\)\\]"))
+                            else if (Regex.IsMatch(word, @"[\+\-\*\(\)\/]"))
                             {
                                 tokens.Add(
                                     new Token
@@ -865,16 +937,23 @@ namespace DevBots.Services
             }
             else if (leftSide.Count(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER) == leftSide.Count)
             {
-                var res = _evaluateExpression(leftSide
-                    .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
-                    .Join(""));
-                leftValue = new Token
+                try
                 {
-                    Index = 0,
-                    LineNumber = 0,
-                    Type = Types.NUMBER,
-                    Value = res.ToString(),
-                };
+                    var res = _evaluateExpression(leftSide
+                        .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
+                        .Join(""));
+                    leftValue = new Token
+                    {
+                        Index = 0,
+                        LineNumber = 0,
+                        Type = Types.NUMBER,
+                        Value = res.ToString(),
+                    };
+                }
+                catch (Exception e)
+                {
+                    return null;
+                }
             }
             else if (leftSide.Count(t => t.Type == Types.STRING) + leftSide.Count(t => t.Type == Types.BOOLEAN) + leftSide.Count(t => t.Type == Types.NUMBER) + leftSide.Count(t => t.Type == Types.EXPRESSION) == leftSide.Count)
             {
@@ -937,16 +1016,23 @@ namespace DevBots.Services
 
             else if (rightSide.Count(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER) == rightSide.Count)
             {
-                var res = _evaluateExpression(rightSide
-                    .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
-                    .Join(""));
-                rightValue = new Token
+                try
                 {
-                    Index = 0,
-                    LineNumber = 0,
-                    Type = Types.NUMBER,
-                    Value = res.ToString(),
-                };
+                    var res = _evaluateExpression(rightSide
+                        .Where(t => t.Type == Types.EXPRESSION || t.Type == Types.NUMBER).Select(t => t.Value)
+                        .Join(""));
+                    rightValue = new Token
+                    {
+                        Index = 0,
+                        LineNumber = 0,
+                        Type = Types.NUMBER,
+                        Value = res.ToString(),
+                    };
+                }
+                catch (Exception e)
+                {
+                    return null;
+                }
             }
             else if (rightSide.Count(t => t.Type == Types.STRING) + rightSide.Count(t => t.Type == Types.BOOLEAN) + rightSide.Count(t => t.Type == Types.NUMBER) + rightSide.Count(t => t.Type == Types.EXPRESSION) == rightSide.Count)
             {

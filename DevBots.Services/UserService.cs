@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+//using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,6 +13,8 @@ using DevBots.Shared.BindingModels;
 using DevBots.Shared.DtoModels;
 using DevBots.Shared.Models;
 using Microsoft.IdentityModel.Tokens;
+
+//using Microsoft.IdentityModel.Tokens;
 
 //using Microsoft.Extensions.Configuration;
 
