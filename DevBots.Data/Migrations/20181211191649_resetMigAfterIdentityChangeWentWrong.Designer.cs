@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DevBots.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20181114195552_userSettingsAdded")]
-    partial class userSettingsAdded
+    [Migration("20181211191649_resetMigAfterIdentityChangeWentWrong")]
+    partial class resetMigAfterIdentityChangeWentWrong
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -23,7 +23,7 @@ namespace DevBots.Data.Migrations
 
             modelBuilder.Entity("DevBots.Shared.Models.AccountSettings", b =>
                 {
-                    b.Property<long>("UserId")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -31,7 +31,9 @@ namespace DevBots.Data.Migrations
 
                     b.Property<string>("Theme");
 
-                    b.HasKey("UserId");
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
 
                     b.ToTable("AccountSettings");
                 });
@@ -64,6 +66,8 @@ namespace DevBots.Data.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<long>("UserId");
 
                     b.HasKey("Id");
 

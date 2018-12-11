@@ -182,6 +182,7 @@ namespace DevBots.Services
                     }
                     continue;
                 }
+                //Collecting all while values
                 if (isInWhile)
                 {
                     if (tGroup.Count == 1 && tGroup.First().Type == Types.ENDWHILE)
@@ -207,6 +208,7 @@ namespace DevBots.Services
                         continue;
                     }
                 }
+                //executing while
                 if (_while != null && !isWhile)
                 {
                     while (true)
@@ -249,7 +251,7 @@ namespace DevBots.Services
                             {
                                 if (condition.Value == "TRUE")
                                 {
-                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                    result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                 }
                                 else
                                 {
@@ -269,7 +271,7 @@ namespace DevBots.Services
                                         {
                                             if (paramToken.Value == "TRUE")
                                             {
-                                                result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                                result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                             }
                                             else
                                             {
@@ -306,7 +308,7 @@ namespace DevBots.Services
                                 {
                                     if (value == "TRUE")
                                     {
-                                        result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                        result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                     }
                                     else
                                     {
@@ -344,7 +346,7 @@ namespace DevBots.Services
                                 {
                                     if (conditions.ElementAt(1).Value != "TRUE")
                                     {
-                                        result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                        result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                     }
                                     else
                                     {
@@ -364,7 +366,7 @@ namespace DevBots.Services
                                             {
                                                 if (paramToken.Value != "TRUE")
                                                 {
-                                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                                    result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                                 }
                                                 else
                                                 {
@@ -401,7 +403,7 @@ namespace DevBots.Services
                                     {
                                         if (value != "TRUE")
                                         {
-                                            result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                            result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                         }
                                         else
                                         {
@@ -440,7 +442,7 @@ namespace DevBots.Services
 
                                 if (res == true)
                                 {
-                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                    result.AddRange(Parser(whileTokens, isFunc, funcParams, function, true).ToList());
                                 }
                                 else
                                 {
@@ -452,7 +454,7 @@ namespace DevBots.Services
                     }
                     continue;
                 }
-
+                //Set function end when found ENDFUNC
                 if (tGroup.Count == 1 && tGroup.ElementAt(0).Type == Types.ENDFUNC)
                 {
                     funcName = "";

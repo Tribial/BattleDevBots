@@ -26,7 +26,7 @@ namespace DevBots.Data.DataAccess
         {
             builder.Entity<RefreshToken>()
                 .HasKey(e => e.Id);
-
+            
             builder.Entity<User>()
                 .HasKey(e => e.Id);
 
@@ -40,7 +40,7 @@ namespace DevBots.Data.DataAccess
                 .WithOne(e => e.Owner);
 
             builder.Entity<AccountSettings>()
-                .HasKey(e => e.UserId);
+                .HasKey(e => e.Id);
 
             builder.Entity<Robot>()
                 .HasKey(e => e.Id);

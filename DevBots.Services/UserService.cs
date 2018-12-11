@@ -113,12 +113,19 @@ namespace DevBots.Services
             var addedUser = _userRepository.Get(u => u.Email == user.Email);
             var player = new Player
             {
-                Id = addedUser.Id,
+                UserId = addedUser.Id,
                 Matches = new List<Match>(),
                 Scripts = new List<Script>(),
             };
-
-            insertResult = await _playerRepository.InsertAsync(player);
+            try
+            {
+                insertResult = await _playerRepository.InsertAsync(player);
+            }
+            catch (Exception e)
+            {
+                result.Errors.Add(e.InnerException.Message);
+                return result;
+            }
             if (!insertResult)
             {
                 result.Errors.Add("Something went horribly wrong. Please try again later.");

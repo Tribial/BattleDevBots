@@ -21,7 +21,7 @@ namespace DevBots.Data.Migrations
 
             modelBuilder.Entity("DevBots.Shared.Models.AccountSettings", b =>
                 {
-                    b.Property<long>("UserId")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -29,7 +29,9 @@ namespace DevBots.Data.Migrations
 
                     b.Property<string>("Theme");
 
-                    b.HasKey("UserId");
+                    b.Property<long>("UserId");
+
+                    b.HasKey("Id");
 
                     b.ToTable("AccountSettings");
                 });
@@ -62,6 +64,8 @@ namespace DevBots.Data.Migrations
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<long>("UserId");
 
                     b.HasKey("Id");
 

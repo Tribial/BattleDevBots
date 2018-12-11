@@ -59,13 +59,15 @@ export class ActivateAccountComponent implements OnInit {
   countDown() {
     this._count -= 1;
     this._messageService.editMessage(this._messageId, this._messageContent + this._count);
-
+    console.log(this._redirectTo);
     if(this._count === 0) {
       switch(this._redirectTo) {
         case "login":
           this._router.navigate(['account', 'login']);
+          break;
         case "register":
           this._router.navigate(['account', 'register']);
+          break;
       }
     }
   }

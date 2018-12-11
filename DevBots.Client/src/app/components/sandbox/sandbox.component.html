@@ -1,7 +1,10 @@
 <div class="sandbox-page">
+  <div id="pixi-container" class="pixi-container">
+    <div #pixiContainer class="pixi-window"></div>
+  </div>
   <div id='console' class='console wordwrap'>
     <div *ngFor="let command of consoleCommands" [ngClass]="command.class">
-      > {{command.content}}
+      ><span *ngIf="command.class === 'message'">></span> {{command.content}}
     </div>
   </div>
   <div class='buttons'>

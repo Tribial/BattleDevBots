@@ -1,11 +1,16 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, HostListener } from '@angular/core';
 import { Command } from 'src/app/models/command.model';
-import { Subscription, interval } from 'rxjs';
+import { Subscription, interval, timer } from 'rxjs';
 import { HttpService } from 'src/app/services/http/http.service';
 import { ConsoleCommand } from 'src/app/models/console-command.model';
+import * as PIXI from 'pixi.js/dist/pixi.js';
 import { map } from 'rxjs/operators'
+import { Time } from '@angular/common';
 
 const source = interval(1000);
+const tails = '../../../assets/images/game/tails/';
+const mapElements = '../../../assets/images/game/map_elements/';
+//declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 @Component({
   selector: 'app-sandbox',
@@ -14,11 +19,18 @@ const source = interval(1000);
 })
 export class SandboxComponent implements OnInit, OnDestroy {
   
+  @ViewChild('pixiContainer') pixiContainer; // this allows us to reference and load stuff into the div container
+
+  public pixiApp: any; // this will be our pixi application
   public scriptSelected = false;
   public consoleCommands: ConsoleCommand[] = []
   public runSub;
+  public pixiMarginLeft: number;
+  public pixiMarginTop: number;
   private _commands: Command[] = [];
   private _subscriptions: Subscription[] = [];
+
+  private _robot: PIXI.Sprite;
 
   constructor(private _httpService: HttpService) { 
     source.subscribe(val => this.interpretateResult());
@@ -26,6 +38,69 @@ export class SandboxComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     setTimeout(() => this.sayHello(), 10);
+    this.pixiApp = new PIXI.Application({ width: 800, height: 600 }); // this creates our pixi application
+    this.pixiContainer.nativeElement.appendChild(this.pixiApp.view); // this places our pixi application onto the viewable document
+    PIXI.loader
+      .add([
+        `${tails}tail_1.jpg`,
+        `${tails}tail_2.jpg`,
+        `${tails}tail_3.jpg`,
+        `${tails}tail_4.jpg`,
+        `${tails}tail_5.jpg`,
+        `${tails}tail_6.jpg`,
+        `${tails}tail_7.jpg`,
+        `${mapElements}border_rock_transparent.png`,
+      ])
+      .on('progress', (loader, resource) => this._pixiLoadProgress(loader, resource))
+      .load(() => this._pixiSetup());
+  }
+
+  _pixiLoadProgress(loader, resource) {
+    console.log("Progress: ", loader.progress, "%; Resource: ", resource.url);
+  }
+
+  _pixiGameLoop() {
+
+  }
+
+  _pixiSetup() {
+    let tailCollection: PIXI.Sprite[] = [];
+    let borderRockCollection: PIXI.Sprite[] = [];
+    let x = 0;
+    let y = 0;
+    while(y < 12) {
+      while(x < 16) {
+        let tailNum = Math.floor(Math.random() * 7 + 1);
+        let tailTex = new PIXI.Sprite(PIXI.loader.resources[`${tails}tail_${tailNum}.jpg`].texture);
+        tailTex.x = x * 50;
+        tailTex.y = y * 50;
+        tailCollection.push(tailTex);
+        if(x === 0 || x === 15 || y === 0 || y === 11) {
+          let borderRock = new PIXI.Sprite(PIXI.loader.resources[`${mapElements}border_rock_transparent.png`].texture);
+          borderRock.anchor.x = 0.5;
+          borderRock.anchor.y = 0.5;
+          borderRock.x = x * 50 + 25;
+          borderRock.y = y * 50 + 25;
+          if(x === 0 && y === 0 || x === 15 && y === 11) {
+            borderRock.rotation = -0.5;
+          } else if(x === 0 && y === 11 || x === 15 && y === 0) {
+            borderRock.rotation = 0.5;
+          } else if(x === 0 || x === 15) {
+            borderRock.rotation = 1;
+          }
+          borderRockCollection.push(borderRock);
+        }
+        x++;
+      }
+      x = 0;
+      y++
+    }
+    tailCollection.forEach(tail => {
+      this.pixiApp.stage.addChild(tail);
+    });
+    borderRockCollection.forEach(rock => {
+      this.pixiApp.stage.addChild(rock);
+    })
   }
 
   sayHello() {
@@ -48,6 +123,9 @@ export class SandboxComponent implements OnInit, OnDestroy {
           com2.console = "<ISSYSTEM>Script interpreted successfully. Now executing the outcome...";
           this._commands.push(com2); 
           this._commands.push(...data.model);
+          let com3 = new Command();
+          com3.console = "<ISSYSTEM>Script executed successfully";
+          this._commands.push(com3);
         },
         error => {
           console.log(error);
@@ -57,14 +135,14 @@ export class SandboxComponent implements OnInit, OnDestroy {
   }
 
   interpretateResult() {
-    console.log("Running...");
+    //console.log("Running...");
     if(this._commands.length !== 0) {
       this.interpretateCommand(this._commands[0]);
       this._commands = this._commands.splice(1);
-      console.log('...executing.');
+      //console.log('...executing.');
     }
     else {
-      console.log('...nothing found.');
+      //console.log('...nothing found.');
     }
   }
 
