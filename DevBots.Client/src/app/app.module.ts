@@ -19,6 +19,7 @@ import { MessagesComponent } from './components/messages/messages.component';
 import { messageReducer } from './store/reducers/message.reducer';
 import { MessageService } from './services/message/message-service.service';
 import { NotificationsComponent } from './components/modal-windows/notifications/notifications.component';
+import { SandboxComponent } from './components/sandbox/sandbox.component';
 
 
 @NgModule({
@@ -30,6 +31,7 @@ import { NotificationsComponent } from './components/modal-windows/notifications
     ActivateAccountComponent,
     MessagesComponent,
     NotificationsComponent,
+    SandboxComponent,
   ],
   imports: [
     HttpClientModule,

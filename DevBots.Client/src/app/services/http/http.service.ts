@@ -8,6 +8,7 @@ import { ResponseModel } from '../../models/response-model';
 import { Observable, Subscription } from 'rxjs';
 import { Empty } from '../../models/empty.model';
 import { CookieService } from 'ngx-cookie-service';
+import { Command } from 'src/app/models/command.model';
 
 const api = 'https://localhost:44397/api/';
 const httpOptions = {
@@ -45,5 +46,10 @@ export class HttpService {
     let jwt = this._cookieService.get('jwt_auth');
     httpOptions.headers.append('Authorization', 'Bearer ' + jwt);
     return this._http.post<ResponseModel<Empty>>(api + 'Users/Logout', null, httpOptions);
+  }
+
+  //SCRIPTS
+  public runScript() {
+    return this._http.get<ResponseModel<Command[]>>(api + 'Language/Decode', httpOptions);
   }
 }

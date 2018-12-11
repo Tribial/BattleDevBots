@@ -6,6 +6,7 @@ import { HttpService } from 'src/app/services/http/http.service';
 import { Subscription } from 'rxjs';
 import { MessageService } from 'src/app/services/message/message-service.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-main-page',
@@ -104,7 +105,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
     },
   ];
 
-    constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer, private _auth: AuthService, private _http: HttpService, private _messageService: MessageService) {
+    constructor(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer, private _auth: AuthService, private _http: HttpService, private _messageService: MessageService, private _router: Router) {
     this.setFirstAvailableGridItemAsActivated()
     iconRegistry.addSvgIcon(
       'settings',
@@ -223,7 +224,13 @@ export class MainPageComponent implements OnInit, OnDestroy {
     if(this._keyFocusOn === 'grid') {
       this.gridList.forEach(item => {
         if(item.activated) {
-          alert(item.title);
+          switch (item.id) {
+            case 2:
+              this._router.navigate(['sandbox']);
+              break;
+            default:
+              alert(item.title + item.id);
+          }
         }
       });
     } else if(this._keyFocusOn === 'panel') {

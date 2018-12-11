@@ -5,12 +5,14 @@ import { MainPageComponent } from './components/main-page/main-page.component';
 import { AuthGuardService } from './services/auth-guard/auth-guard.service';
 import { PageNotFoundComponent } from './components/page-not-found/page-not-found.component';
 import { ActivateAccountComponent } from './components/activate-account/activate-account.component';
+import { SandboxComponent } from './components/sandbox/sandbox.component';
 
 const routes: Routes = [
   {path: 'account/:type', component: LoginPageComponent},
   {path: '', component: MainPageComponent, canActivate: [AuthGuardService]},
+  {path: 'sandbox', component: SandboxComponent, canActivate: [AuthGuardService]},
   {path: 'activate/:userGuid', component: ActivateAccountComponent},
-  {path: '**', component: PageNotFoundComponent}
+  {path: '**', component: PageNotFoundComponent},
 ];
 
 @NgModule({

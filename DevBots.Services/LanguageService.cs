@@ -19,6 +19,7 @@ namespace DevBots.Services
         private Dictionary<string, string> _variables;
         private Dictionary<string, string> _types;
         private List<Function> _functions = new List<Function>();
+        private While _while;
         private const string ConsoleDebug = "DEBUG INFO: ";
         public LanguageService()
         {
@@ -40,11 +41,11 @@ namespace DevBots.Services
 
             var script = File.ReadAllText(scriptPath);
             var tokens = Lexer(script);
-            result.Model = Parser(tokens, false, new List<Token>(), new Function()).ToList();
+            result.Model = Parser(tokens, false, new List<Token>(), new Function(), false).ToList();
             return result;
         }
 
-        private IEnumerable<RobotCommand> Parser(IEnumerable<Token> tokens, bool isFunc, List<Token> funcParams, Function function)
+        private IEnumerable<RobotCommand> Parser(IEnumerable<Token> tokens, bool isFunc, List<Token> funcParams, Function function, bool isWhile)
         {
             _print("New execution of Parser ===========================");
             _print("Tokens: ");
@@ -63,6 +64,7 @@ namespace DevBots.Services
             var tokenGroups = new List<List<Token>>();
             var tokenGroup = new List<Token>();
             var expectEndIf = 0;
+            var expectEndWhile = 0;
             var expectedEndFunc = 0;
             foreach (var token in tokens)
             {
@@ -102,6 +104,24 @@ namespace DevBots.Services
                         return result;
                     }
                 }
+                else if (token.Type == Types.WHILE)
+                {
+                    expectEndWhile++;
+                }
+                else if (token.Type == Types.ENDWHILE)
+                {
+                    expectEndWhile--;
+                    if (expectEndWhile < 0)
+                    {
+                        result.Add(new RobotCommand
+                        {
+                            Error = "An ENDWHILE can't be before an WHILE"
+                        });
+                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                        return result;
+                    }
+                }
                 if (token.Type != Types.NEWLINE)
                 {
                     tokenGroup.Add(token);
@@ -133,10 +153,305 @@ namespace DevBots.Services
                 return result;
             }
 
+            if (expectEndWhile != 0)
+            {
+                result.Add(new RobotCommand
+                {
+                    Error = "Each WHILE should end with and ENDWHILE"
+                });
+                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                return result;
+            }
+
+            var isInWhile = false;
+            var shouldSkipToEndWhile = false;
+            var whileIteration = 0;
             var shouldDo = new List<bool> {true};
             var funcName = "";
             foreach (var tGroup in tokenGroups)
             {
+                if (shouldSkipToEndWhile)
+                {
+                    if (tGroup.Count == 1)
+                    {
+                        if (tGroup.First().Type == Types.ENDWHILE)
+                        {
+                            shouldSkipToEndWhile = false;
+                        }
+                    }
+                    continue;
+                }
+                if (isInWhile)
+                {
+                    if (tGroup.Count == 1 && tGroup.First().Type == Types.ENDWHILE)
+                    {
+                        isInWhile = false;
+                    }
+                    else
+                    {
+                        tGroup.ForEach(t => _while.Tokens.Add(new Token
+                        {
+                            Index = -1,
+                            LineNumber = t.LineNumber,
+                            Type = t.Type,
+                            Value = t.Value,
+                        }));
+                        _while.Tokens.Add(new Token
+                        {
+                            Index = -1,
+                            LineNumber = -1,
+                            Type = Types.NEWLINE,
+                            Value = "NEWLINE",
+                        });
+                        continue;
+                    }
+                }
+                if (_while != null && !isWhile)
+                {
+                    while (true)
+                    {
+                        whileIteration++;
+                        if (whileIteration > 50)
+                        {
+                            result.Add(new RobotCommand
+                            {
+                                Error = "Your while can't iterate more than 50 times",
+                            });
+                            return result;
+                        }
+                        var conditions = new List<Token>();
+                        foreach (var token in _while.Condition)
+                        {
+                            conditions.Add(new Token
+                            {
+                                Index = -1,
+                                LineNumber = token.LineNumber,
+                                Type = token.Type,
+                                Value = token.Value,
+                            });
+                        }
+                        var whileTokens = new List<Token>();
+                        _while.Tokens.ForEach(t =>
+                        {
+                            whileTokens.Add(new Token
+                            {
+                                Index = -1,
+                                LineNumber = t.LineNumber,
+                                Type = t.Type,
+                                Value = t.Value,
+                            });
+                        });
+                        if (conditions.Count == 1)
+                        {
+                            var condition = conditions.First();
+                            if (condition.Type == Types.BOOLEAN)
+                            {
+                                if (condition.Value == "TRUE")
+                                {
+                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                }
+                                else
+                                {
+                                    _while = null;
+                                    break;
+                                }
+                            }
+                            else if (condition.Type == Types.UNDEFINED)
+                            {
+                                if (isFunc)
+                                {
+                                    if (function.Params.Contains(condition.Value))
+                                    {
+                                        var paramIndex = function.Params.IndexOf(condition.Value);
+                                        var paramToken = funcParams.ElementAt(paramIndex);
+                                        if (paramToken.Type == Types.BOOLEAN)
+                                        {
+                                            if (paramToken.Value == "TRUE")
+                                            {
+                                                result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                            }
+                                            else
+                                            {
+                                                _while = null;
+                                                break;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            result.Add(new RobotCommand
+                                            {
+                                                Error = $"At line {condition.LineNumber}. WHILE statement accepts only BOOLEAN"
+                                            });
+                                            _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                            return result;
+                                        }
+                                    }
+                                    continue;
+                                }
+                                _variables.TryGetValue(condition.Value, out var value);
+                                if (value == null)
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"Undefined variable at line {condition.LineNumber}"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                    return result;
+                                }
+
+                                if (_types[condition.Value] == "BOOLEAN")
+                                {
+                                    if (value == "TRUE")
+                                    {
+                                        result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                    }
+                                    else
+                                    {
+                                        _while = null;
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"At line {condition.LineNumber}. WHILE statement accepts only BOOLEAN"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                    return result;
+                                }
+                            }
+                            else
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"At line {condition.LineNumber}. IF statement accepts only BOOLEAN"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                return result;
+                            }
+                        }
+                        else if (conditions.Count == 2)
+                        {
+                            if (conditions.ElementAt(0).Type == Types.NOT)
+                            {
+                                if (conditions.ElementAt(1).Type == Types.BOOLEAN)
+                                {
+                                    if (conditions.ElementAt(1).Value != "TRUE")
+                                    {
+                                        result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                    }
+                                    else
+                                    {
+                                        _while = null;
+                                        break;
+                                    }
+                                }
+                                else if (conditions.ElementAt(1).Type == Types.UNDEFINED)
+                                {
+                                    if (isFunc)
+                                    {
+                                        if (function.Params.Contains(conditions.ElementAt(1).Value))
+                                        {
+                                            var paramIndex = function.Params.IndexOf(conditions.ElementAt(1).Value);
+                                            var paramToken = funcParams.ElementAt(paramIndex);
+                                            if (paramToken.Type == Types.BOOLEAN)
+                                            {
+                                                if (paramToken.Value != "TRUE")
+                                                {
+                                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                                }
+                                                else
+                                                {
+                                                    _while = null;
+                                                    break;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                result.Add(new RobotCommand
+                                                {
+                                                    Error = $"At line {conditions.ElementAt(1).LineNumber}. WHILE statement accepts only BOOLEAN"
+                                                });
+                                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                                return result;
+                                            }
+                                            continue;
+                                        }
+                                    }
+                                    _variables.TryGetValue(conditions.ElementAt(1).Value, out var value);
+                                    if (value == null)
+                                    {
+                                        result.Add(new RobotCommand
+                                        {
+                                            Error = $"Undefined variable at line {conditions.ElementAt(1).LineNumber}"
+                                        });
+                                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                        return result;
+                                    }
+
+                                    if (_types[conditions.ElementAt(1).Value] == "BOOLEAN")
+                                    {
+                                        if (value != "TRUE")
+                                        {
+                                            result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                        }
+                                        else
+                                        {
+                                            _while = null;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        result.Add(new RobotCommand
+                                        {
+                                            Error = $"At line {conditions.ElementAt(1).LineNumber}. WHILE statement accepts only BOOLEAN"
+                                        });
+                                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                        return result;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (conditions.Any(c => c.Type == Types.COMPARE))
+                            {
+                                var res = _resolveBoolean(conditions, isFunc, function, funcParams);
+                                if (res == null)
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"An error occured at line {conditions.First().LineNumber}"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                    return result;
+                                }
+
+                                if (res == true)
+                                {
+                                    result.AddRange(Parser(whileTokens, false, new List<Token>(), new Function(), true).ToList());
+                                }
+                                else
+                                {
+                                    _while = null;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    continue;
+                }
 
                 if (tGroup.Count == 1 && tGroup.ElementAt(0).Type == Types.ENDFUNC)
                 {
@@ -350,7 +665,7 @@ namespace DevBots.Services
                                 Value = t.Value,
                             });
                         });
-                        result.AddRange(Parser(funcTokens, true, paramTokens, func));
+                        result.AddRange(Parser(funcTokens, true, paramTokens, func, false));
                         if (result.Any(r => r.Error != null))
                         {
                             return result;
@@ -497,6 +812,224 @@ namespace DevBots.Services
                         _functions.Add(newFunc);
                     }
                 }
+                //WHILE---------------------------------------------------------------------
+                else if (tGroup.ElementAt(0).Type == Types.WHILE && tGroup.Last().Type == Types.THEN)
+                {
+                    if (isInWhile)
+                    {
+                        result.Add(new RobotCommand
+                        {
+                            Error = $"At line {tGroup.ElementAt(0).LineNumber}, you can't have a while inside a while"
+                        });
+                        return result;
+                    }
+
+                    var whileCondition = new List<Token>();
+                    foreach (var token in tGroup.GetRange(1, tGroup.Count - 2))
+                    {
+                        whileCondition.Add(new Token
+                        {
+                            Index = -1,
+                            LineNumber = token.LineNumber,
+                            Type = token.Type,
+                            Value = token.Value,
+                        });
+                    }
+                    var conditions = tGroup.GetRange(1, tGroup.Count - 2);
+                    if (conditions.Count == 1)
+                    {
+                        var condition = conditions.First();
+                        if (condition.Type == Types.BOOLEAN)
+                        {
+                            isInWhile = condition.Value == "TRUE";
+                            shouldSkipToEndWhile = !isInWhile;
+                            if (isInWhile)
+                            {
+                                _while = new While { Condition = whileCondition };
+                            }
+                            _print("Do while " + isInWhile.ToString());
+                        }
+                        else if (condition.Type == Types.UNDEFINED)
+                        {
+                            if (isFunc)
+                            {
+                                if (function.Params.Contains(condition.Value))
+                                {
+                                    var paramIndex = function.Params.IndexOf(condition.Value);
+                                    var paramToken = funcParams.ElementAt(paramIndex);
+                                    if (paramToken.Type == Types.BOOLEAN)
+                                    {
+                                        isInWhile = paramToken.Value == "TRUE";
+                                        shouldSkipToEndWhile = !isInWhile;
+                                        if (isInWhile)
+                                        {
+                                            _while = new While {Condition = whileCondition };
+                                        }
+                                        _print("Do while " + isInWhile.ToString());
+                                    }
+                                    else
+                                    {
+                                        result.Add(new RobotCommand
+                                        {
+                                            Error = $"At line {condition.LineNumber}. WHILE statement accepts only BOOLEAN"
+                                        });
+                                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                        return result;
+                                    }
+                                }
+                                continue;
+                            }
+                            _variables.TryGetValue(condition.Value, out var value);
+                            if (value == null)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"Undefined variable at line {condition.LineNumber}"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                return result;
+                            }
+
+                            if (_types[condition.Value] == "BOOLEAN")
+                            {
+                                isInWhile = value == "TRUE";
+                                shouldSkipToEndWhile = !isInWhile;
+                                if (isInWhile)
+                                {
+                                    _while = new While { Condition = whileCondition };
+                                }
+                                _print("Do while " + isInWhile.ToString());
+                            }
+                            else
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"At line {condition.LineNumber}. WHILE statement accepts only BOOLEAN"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                return result;
+                            }
+                        }
+                        else
+                        {
+                            result.Add(new RobotCommand
+                            {
+                                Error = $"At line {condition.LineNumber}. WHILE statement accepts only BOOLEAN"
+                            });
+                            _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                            return result;
+                        }
+                    }
+                    else if (conditions.Count == 2)
+                    {
+                        if (conditions.ElementAt(0).Type == Types.NOT)
+                        {
+                            if (conditions.ElementAt(1).Type == Types.BOOLEAN)
+                            {
+                                isInWhile = conditions.ElementAt(1).Value != "TRUE";
+                                shouldSkipToEndWhile = !isInWhile;
+                                if (isInWhile)
+                                {
+                                    _while = new While { Condition = whileCondition };
+                                }
+                                _print("Do while " + isInWhile.ToString());
+                            }
+                            else if (conditions.ElementAt(1).Type == Types.UNDEFINED)
+                            {
+                                if (isFunc)
+                                {
+                                    if (function.Params.Contains(conditions.ElementAt(1).Value))
+                                    {
+                                        var paramIndex = function.Params.IndexOf(conditions.ElementAt(1).Value);
+                                        var paramToken = funcParams.ElementAt(paramIndex);
+                                        if (paramToken.Type == Types.BOOLEAN)
+                                        {
+                                            isInWhile = paramToken.Value != "TRUE";
+                                            shouldSkipToEndWhile = !isInWhile;
+                                            if (isInWhile)
+                                            {
+                                                _while = new While { Condition = whileCondition };
+                                            }
+                                            _print("Do while " + isInWhile.ToString());
+                                        }
+                                        else
+                                        {
+                                            result.Add(new RobotCommand
+                                            {
+                                                Error = $"At line {conditions.ElementAt(1).LineNumber}. WHILE statement accepts only BOOLEAN"
+                                            });
+                                            _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                            return result;
+                                        }
+                                        continue;
+                                    }
+                                }
+                                _variables.TryGetValue(conditions.ElementAt(1).Value, out var value);
+                                if (value == null)
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"Undefined variable at line {conditions.ElementAt(1).LineNumber}"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                    return result;
+                                }
+
+                                if (_types[conditions.ElementAt(1).Value] == "BOOLEAN")
+                                {
+                                    isInWhile = value != "TRUE";
+                                    shouldSkipToEndWhile = !isInWhile;
+                                    if (isInWhile)
+                                    {
+                                        _while = new While { Condition = whileCondition };
+                                    }
+                                    _print("Do while " + isInWhile.ToString());
+                                }
+                                else
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"At line {conditions.ElementAt(1).LineNumber}. WHILE statement accepts only BOOLEAN"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (conditions.Any(c => c.Type == Types.COMPARE))
+                        {
+                            var res = _resolveBoolean(conditions, isFunc, function, funcParams);
+                            if (res == null)
+                            {
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"An error occured at line {conditions.First().LineNumber}"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+
+                                return result;
+                            }
+                            isInWhile = res == true;
+                            shouldSkipToEndWhile = !isInWhile;
+                            if (isInWhile)
+                            {
+                                _while = new While { Condition = whileCondition };
+                            }
+                            _print("Do while " + isInWhile.ToString());
+                        }
+                    }
+                }
+                //IF---------------------------------------------------------------------
                 else if (tGroup.ElementAt(0).Type == Types.IF && tGroup.Last().Type == Types.THEN)
                 {
                     var conditions = tGroup.GetRange(1, tGroup.Count - 2);
@@ -1251,6 +1784,26 @@ namespace DevBots.Services
                                     LineNumber = lineNumber,
                                     Type = Types.PARAMS,
                                     Value = "PARAMS"
+                                });
+                            break;
+                        case "WHILE":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.WHILE,
+                                    Value = "WHILE"
+                                });
+                            break;
+                        case "ENDWHILE":
+                            tokens.Add(
+                                new Token
+                                {
+                                    Index = tokens.Count,
+                                    LineNumber = lineNumber,
+                                    Type = Types.ENDWHILE,
+                                    Value = "ENDWHILE"
                                 });
                             break;
                         case "=":

@@ -24,5 +24,7 @@ namespace DevBots.Shared.Enums
         ENDIF,
         NEWLINE,
         UNDEFINED,
+        WHILE,
+        ENDWHILE
     }
 }
