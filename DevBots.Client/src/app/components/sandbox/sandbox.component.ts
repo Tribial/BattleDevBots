@@ -10,6 +10,7 @@ import { Time } from '@angular/common';
 const source = interval(1000);
 const tails = '../../../assets/images/game/tails/';
 const mapElements = '../../../assets/images/game/map_elements/';
+const bots = '../../../assets/images/game/bots/';
 //declare var PIXI: any; // instead of importing pixi like some tutorials say to do use declare
 
 @Component({
@@ -30,7 +31,7 @@ export class SandboxComponent implements OnInit, OnDestroy {
   private _commands: Command[] = [];
   private _subscriptions: Subscription[] = [];
 
-  private _robot: PIXI.Sprite;
+  private _player: PIXI.Sprite;
 
   constructor(private _httpService: HttpService) { 
     source.subscribe(val => this.interpretateResult());
@@ -50,6 +51,7 @@ export class SandboxComponent implements OnInit, OnDestroy {
         `${tails}tail_6.jpg`,
         `${tails}tail_7.jpg`,
         `${mapElements}border_rock_transparent.png`,
+        `${bots}tank2_blue_transparent.png`,
       ])
       .on('progress', (loader, resource) => this._pixiLoadProgress(loader, resource))
       .load(() => this._pixiSetup());
@@ -59,8 +61,8 @@ export class SandboxComponent implements OnInit, OnDestroy {
     console.log("Progress: ", loader.progress, "%; Resource: ", resource.url);
   }
 
-  _pixiGameLoop() {
-
+  _pixiGameLoop(delta) {
+    this._player.y--;
   }
 
   _pixiSetup() {
@@ -95,12 +97,20 @@ export class SandboxComponent implements OnInit, OnDestroy {
       x = 0;
       y++
     }
+
+    this._player = new PIXI.Sprite(PIXI.loader.resources[`${bots}tank2_blue_transparent.png`].texture);
+    this._player.x = 7 * 50;
+    this._player.y = 9 * 50;
+
     tailCollection.forEach(tail => {
       this.pixiApp.stage.addChild(tail);
     });
     borderRockCollection.forEach(rock => {
       this.pixiApp.stage.addChild(rock);
-    })
+    });
+    this.pixiApp.stage.addChild(this._player);
+
+    this.pixiApp.ticker.add(delta => this._pixiGameLoop(delta));
   }
 
   sayHello() {
