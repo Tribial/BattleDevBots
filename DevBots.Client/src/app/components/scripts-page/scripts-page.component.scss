@@ -1,0 +1,46 @@
+.scrit-page {
+    position: absolute;
+    height: 90%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    -webkit-box-shadow: inset 0px 0px 100px 30px indigo;
+    -moz-box-shadow: inset 0px 0px 100px 30px indigo;
+    box-shadow: inset 0px 0px 100px 30px indigo;
+    
+    .bottom-progress-bar {
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+    }
+}
+
+.scripts-list {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    width: calc(100% - 60px);
+    height: calc(100% - 60px);
+    overflow: auto;
+}
+button, h2 {
+    font-family: 'Allerta Stencil', sans-serif;
+}
+table {
+    width: 100%;
+}
+.return-button {
+    position: absolute;
+    height: 10%;
+    width: calc(100% - 200px);
+    bottom: 0;
+    left: 0;
+}
+.add-script-button {
+    position: absolute;
+    height: 10%;
+    width: 200px;
+    bottom: 0;
+    right: 0;
+}

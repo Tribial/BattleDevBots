@@ -228,6 +228,9 @@ export class MainPageComponent implements OnInit, OnDestroy {
             case 2:
               this._router.navigate(['sandbox']);
               break;
+            case 8:
+              this._router.navigate(['scripts']);
+              break;
             default:
               alert(item.title + item.id);
           }

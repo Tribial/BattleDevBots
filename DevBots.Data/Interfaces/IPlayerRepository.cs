@@ -9,5 +9,6 @@ namespace DevBots.Data.Interfaces
     public interface IPlayerRepository
     {
         Task<bool> InsertAsync(Player player);
+        Player Get(Func<Player, bool> func);
     }
 }

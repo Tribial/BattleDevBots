@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq.Expressions;
 //using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -101,7 +103,21 @@ namespace DevBots.Services
             newUser.Guid = Guid.NewGuid().ToString();
             newUser.IsConfirmed = false;
             newUser.IsAdmin = false;
+            var emailSend = true;
 
+            Directory.CreateDirectory($@"../Scripts/{user.Username}");
+            try
+            {
+                var activationUrl = _configurationService.GetValue("ActivationLink")
+                    .Replace("<userGuid>", newUser.Guid);
+                ExtensionMethods.SendEmail(user.Email, user.Username, activationUrl);
+            }
+            catch (Exception)
+            {
+                emailSend = false;
+            }
+
+            newUser.IsConfirmed = !emailSend;
             var insertResult = await _userRepository.Insert(newUser);
 
             if (!insertResult)
@@ -109,7 +125,6 @@ namespace DevBots.Services
                 result.Errors.Add("Something went horribly wrong. Please try again later.");
                 return result;
             }
-
             var addedUser = _userRepository.Get(u => u.Email == user.Email);
             var player = new Player
             {
@@ -131,7 +146,6 @@ namespace DevBots.Services
                 result.Errors.Add("Something went horribly wrong. Please try again later.");
                 return result;
             }
-
             var settings = new AccountSettings
             {
                 MouseEnabled = true,
@@ -145,9 +159,10 @@ namespace DevBots.Services
                 return result;
             }
 
-            var activationUrl = _configurationService.GetValue("ActivationLink").Replace("<userGuid>", newUser.Guid);
-            ExtensionMethods.SendEmail(user.Email, user.Username, activationUrl);
-
+            if (!emailSend)
+            {
+                result.Errors.Add("<SUCCESS>Your account was created, you may now log in.");
+            }
             return result;
         }
 

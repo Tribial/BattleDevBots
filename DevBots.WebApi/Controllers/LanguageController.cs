@@ -25,12 +25,17 @@ namespace DevBots.WebApi.Controllers
 
         [AllowAnonymous] //Delete this after testing!!!!!
         [HttpGet("Decode")]
-        public Responses<RobotCommand> DecodeScript()
+        public IActionResult DecodeScript()
         {
             var result = new Responses<RobotCommand>();
             
             result = _languageService.Decode(@"..\Scripts\Tribial\myScript.rl");
-            return result;
+            if (result.ErrorOccured)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
     }
 }

@@ -1,0 +1,23 @@
+<div class='background'>
+</div>
+<div class='form-container'>
+  <form class="form">
+    <mat-form-field class="full-width">
+        <input [disabled]="isLoading" matInput placeholder="Display name" [(ngModel)]="displayName" name="displayName">
+    </mat-form-field>
+    <input [disabled]="isLoading" class='file-select' placeholder="Select script" (change)='fileChange($event)' name="script" type="file">
+    <mat-form-field>
+      <mat-select placeholder="Select robot" [(ngModel)]="selectedRobotId" name="robot" [disabled]="isLoading">
+        <mat-option *ngFor="let robot of robots" [value]="robot.id">
+          {{robot.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="button">
+        <button [disabled]="isLoading" (click)="addScript()" mat-flat-button color="primary" class="full-width">Add</button>
+    </div>
+    <div class="cancel-button">
+      <button [disabled]="isLoading" (click)="cancel()" mat-flat-button color="accent" class="full-width">Cancel</button>
+  </div>
+  </form>
+</div>

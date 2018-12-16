@@ -6,6 +6,8 @@ import { ConsoleCommand } from 'src/app/models/console-command.model';
 import * as PIXI from 'pixi.js/dist/pixi.js';
 import { map } from 'rxjs/operators'
 import { Time } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from 'src/app/services/auth/auth.service';
 
 const source = interval(1000);
 const tails = '../../../assets/images/game/tails/';
@@ -22,7 +24,7 @@ export class SandboxComponent implements OnInit, OnDestroy {
   
   @ViewChild('pixiContainer') pixiContainer; // this allows us to reference and load stuff into the div container
 
-  public pixiApp: any; // this will be our pixi application
+  public pixiApp: PIXI.Application; // this will be our pixi application
   public scriptSelected = false;
   public consoleCommands: ConsoleCommand[] = []
   public runSub;
@@ -30,18 +32,18 @@ export class SandboxComponent implements OnInit, OnDestroy {
   public pixiMarginTop: number;
   private _commands: Command[] = [];
   private _subscriptions: Subscription[] = [];
-
+  private _pixiTextures: any[] = [];
   private _player: PIXI.Sprite;
 
-  constructor(private _httpService: HttpService) { 
-    source.subscribe(val => this.interpretateResult());
+  constructor(private _httpService: HttpService, private _router: Router, private _authService: AuthService) { 
+    this.runSub = source.subscribe(val => this.interpretateResult());
   }
 
   ngOnInit() {
     setTimeout(() => this.sayHello(), 10);
     this.pixiApp = new PIXI.Application({ width: 800, height: 600 }); // this creates our pixi application
     this.pixiContainer.nativeElement.appendChild(this.pixiApp.view); // this places our pixi application onto the viewable document
-    PIXI.loader
+    this.pixiApp.loader
       .add([
         `${tails}tail_1.jpg`,
         `${tails}tail_2.jpg`,
@@ -62,7 +64,7 @@ export class SandboxComponent implements OnInit, OnDestroy {
   }
 
   _pixiGameLoop(delta) {
-    this._player.y--;
+    //this._player.y--;
   }
 
   _pixiSetup() {
@@ -73,12 +75,12 @@ export class SandboxComponent implements OnInit, OnDestroy {
     while(y < 12) {
       while(x < 16) {
         let tailNum = Math.floor(Math.random() * 7 + 1);
-        let tailTex = new PIXI.Sprite(PIXI.loader.resources[`${tails}tail_${tailNum}.jpg`].texture);
+        let tailTex = new PIXI.Sprite(this.pixiApp.loader.resources[`${tails}tail_${tailNum}.jpg`].texture);
         tailTex.x = x * 50;
         tailTex.y = y * 50;
         tailCollection.push(tailTex);
         if(x === 0 || x === 15 || y === 0 || y === 11) {
-          let borderRock = new PIXI.Sprite(PIXI.loader.resources[`${mapElements}border_rock_transparent.png`].texture);
+          let borderRock = new PIXI.Sprite(this.pixiApp.loader.resources[`${mapElements}border_rock_transparent.png`].texture);
           borderRock.anchor.x = 0.5;
           borderRock.anchor.y = 0.5;
           borderRock.x = x * 50 + 25;
@@ -98,7 +100,7 @@ export class SandboxComponent implements OnInit, OnDestroy {
       y++
     }
 
-    this._player = new PIXI.Sprite(PIXI.loader.resources[`${bots}tank2_blue_transparent.png`].texture);
+    this._player = new PIXI.Sprite(this.pixiApp.loader.resources[`${bots}tank2_blue_transparent.png`].texture);
     this._player.x = 7 * 50;
     this._player.y = 9 * 50;
 
@@ -122,6 +124,10 @@ export class SandboxComponent implements OnInit, OnDestroy {
     this._commands.push(com2);
   }
 
+  returnToMenu() {
+    this._router.navigate(['/']);
+  }
+
   runScript() {
     let com = new Command();
     com.console = "<ISSYSTEM>Running script 'testLang.rl'...";
@@ -138,6 +144,20 @@ export class SandboxComponent implements OnInit, OnDestroy {
           this._commands.push(com3);
         },
         error => {
+          if(error.status === 401) {
+            this._authService.handleUnauthorized();
+          }
+          else {
+            if(error.error !== undefined) {
+              if(error.error.errorOccured === true) {
+                error.error.errors.forEach(err => {
+                  let com = new Command();
+                  com.error = err;
+                  this._commands.push(com);
+                });
+              }
+            }
+          }
           console.log(error);
         }
       )
@@ -186,5 +206,8 @@ export class SandboxComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this._subscriptions.forEach(s => s.unsubscribe());
     this.runSub.unsubscribe();
+    this.pixiApp.loader.destroy();
+    this.pixiApp.stage.destroy();
+    this.pixiApp.destroy();
   }
 }

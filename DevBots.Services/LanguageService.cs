@@ -1222,7 +1222,7 @@ namespace DevBots.Services
                                         Console = _evaluateExpression(tGroup.ElementAt(1).Value).ToString(),
                                     });
                                 }
-                                catch (Exception e)
+                                catch (Exception)
                                 {
                                     result.Add(new RobotCommand
                                     {
@@ -1407,7 +1407,7 @@ namespace DevBots.Services
                                     Console = res.ToString(),
                                 });
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {
                                 result.Add(new RobotCommand
                                 {
@@ -1589,7 +1589,7 @@ namespace DevBots.Services
                                 _types[tGroup.ElementAt(1).Value] = "NUMBER";
 
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {
                                 result.Add(new RobotCommand
                                 {
@@ -2112,7 +2112,7 @@ namespace DevBots.Services
                         Value = res.ToString(),
                     };
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return null;
                 }
@@ -2213,7 +2213,7 @@ namespace DevBots.Services
                         Value = res.ToString(),
                     };
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return null;
                 }

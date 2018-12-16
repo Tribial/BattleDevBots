@@ -9,6 +9,8 @@ import { Observable, Subscription } from 'rxjs';
 import { Empty } from '../../models/empty.model';
 import { CookieService } from 'ngx-cookie-service';
 import { Command } from 'src/app/models/command.model';
+import { SimpleRobot } from 'src/app/models/simple-robot.model';
+import { Script } from 'src/app/models/script.model';
 
 const api = 'https://localhost:44397/api/';
 const httpOptions = {
@@ -25,9 +27,14 @@ export class HttpService {
 
   // private tokenModel: LoginModel;
   // private _subscriptions: Subscription[] = [];
+  private _headers;
 
   constructor(private _http: HttpClient, private store: Store<AppState>, private _cookieService: CookieService) { 
-    //store.select('auth').subscribe(data => httpOptions.headers.set('Authorization', 'Bearer ' + data.tokens.token));
+    this._headers = new HttpHeaders({
+      'Content-Type':  'application/json',
+      'Access-Control-Allow-Origin': 'localhost:4200',
+      'Authorization': 'bearer ' + _cookieService.get('jwt_auth'),
+    });
   }
 
   public login(login: string, password: string): Observable<ResponseModel<LoginModel>> {
@@ -43,13 +50,35 @@ export class HttpService {
   }
 
   public logout() {
-    let jwt = this._cookieService.get('jwt_auth');
-    httpOptions.headers.append('Authorization', 'Bearer ' + jwt);
-    return this._http.post<ResponseModel<Empty>>(api + 'Users/Logout', null, httpOptions);
+    return this._http.post<ResponseModel<Empty>>(api + 'Users/Logout', null, {headers: this._getHeaders()});
   }
 
   //SCRIPTS
   public runScript() {
-    return this._http.get<ResponseModel<Command[]>>(api + 'Language/Decode', httpOptions);
+    return this._http.get<ResponseModel<Command[]>>(api + 'Language/Decode', {headers: this._getHeaders()});
+  }
+
+  public addScript(name: string, robotId: number, script: string) {
+    return this._http.post<ResponseModel<Empty>>(`${api}Script`, {name, robotId, script}, {headers: this._getHeaders()});
+  }
+
+  public getScriptsByUser() {
+    return this._http.get<ResponseModel<Script[]>>(`${api}Script/ByUser`, {headers: this._getHeaders()});
+  }
+
+  public removeScript(scriptId: number) {
+    return this._http.delete<ResponseModel<Empty>>(`${api}Script/${scriptId}`, {headers: this._getHeaders()});
+  }
+  //ROBOTS
+  public getSimpleRobots(): Observable<ResponseModel<SimpleRobot[]>> {
+    return this._http.get<ResponseModel<SimpleRobot[]>>(api + 'Robots/Simple', {headers: this._getHeaders()});
+  }
+
+  private _getHeaders() {
+    return new HttpHeaders({
+      'Content-Type':  'application/json',
+      'access-control-allow-origin': 'localhost:4200',
+      'Authorization': 'bearer ' + this._cookieService.get('jwt_auth'),
+    });
   }
 }

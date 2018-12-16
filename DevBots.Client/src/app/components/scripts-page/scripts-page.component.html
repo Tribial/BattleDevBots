@@ -1,0 +1,52 @@
+<app-add-script *ngIf="showAddScript" (closeEmitter)='showAddScript = false; getScripts();'></app-add-script>
+<div class='scrit-page'>
+  <div class="scripts-list">
+    <table mat-table [dataSource]="scripts">
+  
+      <!-- Position Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef> Name </th>
+        <td mat-cell *matCellDef="let element"> {{element.name}} </td>
+      </ng-container>
+  
+      <!-- Name Column -->
+      <ng-container matColumnDef="lastUpdate">
+        <th mat-header-cell *matHeaderCellDef> Last Update </th>
+        <td mat-cell *matCellDef="let element"> {{element.lastUpdate.toDateString() + ' - ' + element.lastUpdate.toLocaleTimeString()}} </td>
+      </ng-container>
+  
+      <!-- Weight Column -->
+      <ng-container matColumnDef="forBot">
+        <th mat-header-cell *matHeaderCellDef> For Bot </th>
+        <td mat-cell *matCellDef="let element"> {{element.forBot}} </td>
+      </ng-container>
+  
+      <!-- Symbol Column -->
+      <ng-container matColumnDef="lines">
+        <th mat-header-cell *matHeaderCellDef> Number of lines </th>
+        <td mat-cell *matCellDef="let element"> {{element.lines}} </td>
+      </ng-container>
+  
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef> Actions </th>
+        <td mat-cell *matCellDef="let element">
+          <button mat-icon-button title='Upload a new version fo this script'>
+            <mat-icon svgIcon="upload"></mat-icon>
+          </button>
+          <button mat-icon-button title='Downlaod this script'>
+            <mat-icon svgIcon="download"></mat-icon>
+          </button>
+          <button mat-icon-button title='Remove this script' (click)='removeScript(element.id)'>
+            <mat-icon svgIcon="delete"></mat-icon>
+          </button>
+        </td>
+      </ng-container>
+  
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+  </div>
+  <mat-progress-bar class="bottom-progress-bar" *ngIf="isLoading" mode='query'></mat-progress-bar>
+</div>
+<button class='add-script-button' (click)='showFormToAddScript()' mat-button color='primary'><h2>Add new script</h2></button>
+<button class='return-button' mat-button (click)='returnToMenu()'><h2>Return to menu</h2></button>

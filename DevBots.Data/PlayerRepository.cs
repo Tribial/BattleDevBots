@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DevBots.Data.DataAccess;
@@ -21,6 +22,11 @@ namespace DevBots.Data
         {
             await _db.Players.AddAsync(player);
             return await _saveAsync();
+        }
+
+        public Player Get(Func<Player, bool> func)
+        {
+            return _db.Players.FirstOrDefault(func);
         }
 
         private async Task<bool> _saveAsync()

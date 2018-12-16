@@ -129,9 +129,15 @@ export class LoginPageComponent implements OnInit {
             error.error.Password ? error.error.Password.forEach(e => {
               this._messageService.addMessage(e, "error", 5);
             }) : null;
+            this._messageService.addMessage('Your account was not created, due to an error', 'error', 10);
           } else {
             this.response = error.error;
-            error.error.errors.forEach(e => {
+            if(this.response.errors.length === 1 && this.response.errors[0].startsWith('<SUCCESS>')) {
+              this._messageService.addMessage(this.response.errors[0].split("<SUCCESS>")[1], 'success', 8);
+              this.changeToLogin();
+              return;
+            }
+            this.response.errors.forEach(e => {
               this._messageService.addMessage(e, "error", 5);
             });
           }

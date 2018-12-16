@@ -22,6 +22,8 @@ namespace DevBots.Services
             services.AddTransient<ITokenRepository, TokenRepository>();
             services.AddTransient<IPlayerRepository, PlayerRepository>();
             services.AddTransient<ISettingsRepository, SettingsRepository>();
+            services.AddTransient<IRobotRepository, RobotRepository>();
+            services.AddTransient<IScriptRepository, ScriptRepository>();
 
             AutoMapperConfiguration();
         }
@@ -34,6 +36,12 @@ namespace DevBots.Services
                     .ForMember(dest => dest.PasswordHash, opt => opt.MapFrom(src => src.Password.ToHash()));
 
                 config.CreateMap<User, LoginDto>();
+
+                config.CreateMap<Robot, SimpleRobotDto>();
+
+                config.CreateMap<Script, ScriptForListDto>()
+                    .ForMember(dest => dest.ForBot, opt => opt.MapFrom(src => src.ForRobot.Name))
+                    .ForMember(dest => dest.LastUpdate, opt => opt.MapFrom(src => src.UpdatedAt));
             });
         }
     }
