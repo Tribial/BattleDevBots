@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Mime;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using DevBots.Services.Interfaces;
 using DevBots.Shared.DtoModels;
@@ -23,13 +24,13 @@ namespace DevBots.WebApi.Controllers
             _languageService = languageService;
         }
 
-        [AllowAnonymous] //Delete this after testing!!!!!
-        [HttpGet("Decode")]
-        public IActionResult DecodeScript()
+        [HttpGet("Decode/{scriptId}")]
+        public IActionResult DecodeScript(long scriptId)
         {
+            var userId = Convert.ToInt64(HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Sid).Value);
             var result = new Responses<RobotCommand>();
             
-            result = _languageService.Decode(@"..\Scripts\Tribial\myScript.rl");
+            result = _languageService.Decode(scriptId, userId);
             if (result.ErrorOccured)
             {
                 return BadRequest(result);

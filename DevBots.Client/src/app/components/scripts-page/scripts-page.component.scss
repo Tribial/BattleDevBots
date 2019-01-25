@@ -15,7 +15,9 @@
         width: 100%;
     }
 }
-
+th.mat-sort-header-sorted {
+  color: black;
+}
 .scripts-list {
     position: absolute;
     left: 30px;

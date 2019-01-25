@@ -1,3 +1,27 @@
-<p>
-  select-script works!
-</p>
+<div class='background'>
+</div>
+<div class='form-container'>
+  <mat-progress-bar *ngIf="isLoading" mode='query'></mat-progress-bar>
+  <form class="form">
+    <mat-form-field class="full-width">
+      <mat-select class="full-width" placeholder="Select robot" (selectionChange)='robotChange()' [(ngModel)]="selectedRobotId" name="robot" [disabled]="isLoading">
+        <mat-option *ngFor="let robot of robots" [value]="robot.id">
+          {{robot.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field class="full-width">
+      <mat-select class="full-width" placeholder="Select script" (selectionChange)='scriptChange()' [(ngModel)]="selectedScriptId" name="script" [disabled]="isLoading || selectedRobotId === undefined">
+        <mat-option *ngFor="let script of scripts" [value]="script.id">
+          {{script.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="button">
+        <button [disabled]="isLoading || !done" (click)="select()" mat-flat-button color="primary" class="full-width">Select</button>
+    </div>
+    <div class="button">
+        <button [disabled]="isLoading" (click)="cancel()" mat-flat-button color="accent" class="full-width">Cancel</button>
+    </div>
+  </form>
+</div>

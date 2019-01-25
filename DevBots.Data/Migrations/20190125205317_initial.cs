@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace DevBots.Data.Migrations
 {
-    public partial class resetMigAfterIdentityChangeWentWrong : Migration
+    public partial class initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -122,11 +122,13 @@ namespace DevBots.Data.Migrations
                 {
                     Id = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(nullable: true),
+                    Lines = table.Column<int>(nullable: false),
                     OwnerId = table.Column<long>(nullable: true),
                     CreatedAt = table.Column<DateTime>(nullable: false),
+                    UpdatedAt = table.Column<DateTime>(nullable: false),
                     ForRobotId = table.Column<int>(nullable: true),
-                    Path = table.Column<string>(nullable: true),
-                    IsValid = table.Column<bool>(nullable: false)
+                    ServerPath = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
@@ -170,6 +172,8 @@ namespace DevBots.Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+
+
             migrationBuilder.CreateIndex(
                 name: "IX_Matches_EnemyId",
                 table: "Matches",
@@ -194,6 +198,8 @@ namespace DevBots.Data.Migrations
                 name: "IX_Skills_RobotId",
                 table: "Skills",
                 column: "RobotId");
+
+            migrationBuilder.Sql("INSERT INTO Robots VALUES ('Regular Bot', 1, 1, 10, 1)");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

@@ -63,5 +63,19 @@ namespace DevBots.WebApi.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("Simple/{robotId}")]
+        public IActionResult GetSimpleByRobotId(long robotId)
+        {
+            var userId = Convert.ToInt64(HttpContext.User.Claims.First(c => c.Type == ClaimTypes.Sid).Value);
+            var result = _scriptService.GetSimpleByRobotId(robotId, userId);
+
+            if (result.ErrorOccured)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
     }
 }

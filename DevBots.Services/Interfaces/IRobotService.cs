@@ -7,6 +7,6 @@ namespace DevBots.Services.Interfaces
 {
     public interface IRobotService
     {
-        Responses<SimpleRobotDto> GetSimpleRobots();
+        Responses<SimpleObjectDto> GetSimpleRobots();
     }
 }

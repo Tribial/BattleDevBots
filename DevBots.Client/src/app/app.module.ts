@@ -12,7 +12,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { userReducer } from './store/reducers/user.reducer';
 import { FormsModule, ReactiveFormsModule  } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatButtonModule, MatProgressBarModule, MatCheckboxModule, MatIconModule, MatInputModule, MatSelectModule, MatChipsModule, MatGridListModule, MatProgressSpinnerModule } from '@angular/material';
+import { MatButtonModule, MatProgressBarModule, MatCheckboxModule, MatIconModule, MatInputModule, MatSelectModule, MatChipsModule, MatGridListModule, MatProgressSpinnerModule, MatSortModule } from '@angular/material';
 import {MatTableModule} from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ActivateAccountComponent } from './components/activate-account/activate-account.component';
@@ -65,6 +65,7 @@ import { SelectScriptComponent } from './components/partial/select-script/select
     MatProgressSpinnerModule,
     MatProgressBarModule,
     MatTableModule,
+    MatSortModule,
   ],
   providers: [CookieService, MessageService],
   bootstrap: [AppComponent]

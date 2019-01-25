@@ -1,0 +1,8 @@
+LET x = MY_POS_X
+LET y = MY_POS_Y
+PRINT "X: " + x + "; Y: " + y + ";"
+MOVE_FORWARD
+MOVE_LEFT
+MOVE_FORWARD
+PRINT MY_POS_X
+PRINT MY_POS_X + " - " + MY_POS_Y

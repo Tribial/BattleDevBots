@@ -6,9 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Xsl;
+using DevBots.Data.Interfaces;
 using DevBots.Services.Interfaces;
 using DevBots.Shared.DtoModels;
 using DevBots.Shared.Enums;
+using DevBots.Shared.Models;
 //using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore.Internal;
 
@@ -20,14 +22,28 @@ namespace DevBots.Services
         private Dictionary<string, string> _types;
         private List<Function> _functions = new List<Function>();
         private While _while;
+        private Robot forRobot;
         private const string ConsoleDebug = "DEBUG INFO: ";
-        public LanguageService()
+
+        private readonly IScriptRepository _scriptRepository;
+
+        public LanguageService(IScriptRepository scriptRepository)
         {
+            _scriptRepository = scriptRepository;
         }
 
-        public Responses<RobotCommand> Decode(string scriptPath)
+        public Responses<RobotCommand> Decode(long scriptId, long userId)
         {
             var result = new Responses<RobotCommand>();
+            var scriptObj = _scriptRepository.Get(s => s.Id == scriptId);
+            if (scriptObj.Owner.UserId != userId)
+            {
+                result.Errors.Add("You can't user this script since you are not the owner");
+                return result;
+            }
+
+            forRobot = scriptObj.ForRobot;
+            var scriptPath = scriptObj.ServerPath;
             _variables = new Dictionary<string, string>();
             _types = new Dictionary<string, string>();
             scriptPath = Path.GetFullPath(scriptPath);
@@ -72,14 +88,14 @@ namespace DevBots.Services
                 {
                     expectEndIf++;
                 }
-                else if (token.Type == Types.ENDIF)
+                else if (token.Type == Types.END_IF)
                 {
                     expectEndIf--;
                     if (expectEndIf < 0)
                     {
                         result.Add(new RobotCommand
                         {
-                            Error = "An ENDIF can't be before an IF"
+                            Error = "An END_IF can't be before an IF"
                         });
                         _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
                         
@@ -90,14 +106,14 @@ namespace DevBots.Services
                 {
                     expectedEndFunc++;
                 }
-                else if (token.Type == Types.ENDFUNC)
+                else if (token.Type == Types.END_FUNC)
                 {
                     expectedEndFunc--;
                     if (expectedEndFunc < 0)
                     {
                         result.Add(new RobotCommand
                         {
-                            Error = "An ENDFUNC can't be before an FUNC"
+                            Error = "An END_FUNC can't be before an FUNC"
                         });
                         _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
                         
@@ -108,14 +124,14 @@ namespace DevBots.Services
                 {
                     expectEndWhile++;
                 }
-                else if (token.Type == Types.ENDWHILE)
+                else if (token.Type == Types.END_WHILE)
                 {
                     expectEndWhile--;
                     if (expectEndWhile < 0)
                     {
                         result.Add(new RobotCommand
                         {
-                            Error = "An ENDWHILE can't be before an WHILE"
+                            Error = "An END_WHILE can't be before an WHILE"
                         });
                         _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
 
@@ -137,7 +153,7 @@ namespace DevBots.Services
             {
                 result.Add(new RobotCommand
                 {
-                    Error = "Each IF should end with and ENDIF"
+                    Error = "Each IF should end with and END_IF"
                 });
                 return result;
             }
@@ -146,7 +162,7 @@ namespace DevBots.Services
             {
                 result.Add(new RobotCommand
                 {
-                    Error = "Each FUNC should end with and ENDFUNC"
+                    Error = "Each FUNC should end with and END_FUNC"
                 });
                 _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
                 
@@ -157,7 +173,7 @@ namespace DevBots.Services
             {
                 result.Add(new RobotCommand
                 {
-                    Error = "Each WHILE should end with and ENDWHILE"
+                    Error = "Each WHILE should end with and END_WHILE"
                 });
                 _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
 
@@ -175,7 +191,7 @@ namespace DevBots.Services
                 {
                     if (tGroup.Count == 1)
                     {
-                        if (tGroup.First().Type == Types.ENDWHILE)
+                        if (tGroup.First().Type == Types.END_WHILE)
                         {
                             shouldSkipToEndWhile = false;
                         }
@@ -185,7 +201,7 @@ namespace DevBots.Services
                 //Collecting all while values
                 if (isInWhile)
                 {
-                    if (tGroup.Count == 1 && tGroup.First().Type == Types.ENDWHILE)
+                    if (tGroup.Count == 1 && tGroup.First().Type == Types.END_WHILE)
                     {
                         isInWhile = false;
                     }
@@ -454,8 +470,8 @@ namespace DevBots.Services
                     }
                     continue;
                 }
-                //Set function end when found ENDFUNC
-                if (tGroup.Count == 1 && tGroup.ElementAt(0).Type == Types.ENDFUNC)
+                //Set function end when found END_FUNC
+                if (tGroup.Count == 1 && tGroup.ElementAt(0).Type == Types.END_FUNC)
                 {
                     funcName = "";
                     continue;
@@ -496,7 +512,7 @@ namespace DevBots.Services
                 } 
                 switch (tGroup.Count)
                 {
-                    case 1 when tGroup.First().Type == Types.ENDIF:
+                    case 1 when tGroup.First().Type == Types.END_IF:
                         shouldDo.RemoveAt(shouldDo.Count - 1);
                         continue;
                     case 1 when tGroup.First().Type == Types.ELSE:
@@ -676,6 +692,8 @@ namespace DevBots.Services
 
                     
                 }
+               
+                //FUNC DEC
                 else if (tGroup.Count >= 2 && tGroup.ElementAt(0).Type == Types.FUNC && 
                     tGroup.ElementAt(1).Type == Types.UNDEFINED)
                 {
@@ -1193,6 +1211,7 @@ namespace DevBots.Services
                         }
                     }
                 }
+                //PRINT
                 else if (tGroup.ElementAt(0).Type == Types.PRINT)
                 {
                     if (groupLength == 2)
@@ -1453,6 +1472,7 @@ namespace DevBots.Services
                         }
                     }
                 }
+                //LET
                 else if (tGroup.ElementAt(0).Type == Types.LET)
                 {
                     if (tGroup.ElementAt(1).Type == Types.UNDEFINED && tGroup.ElementAt(2).Type == Types.EQUALS)
@@ -1463,6 +1483,27 @@ namespace DevBots.Services
                             if (t.Type == Types.NOT)
                             {
                                 nextIsNot = true;
+                                return;
+                            }
+                            if (t.Type == Types.ROBOT)
+                            {
+                                if (t.Value == "GET_POS_X")
+                                {
+
+                                }
+                                else if (t.Value == "GET_POS_Y")
+                                {
+
+                                }
+                                else
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"At line {t.LineNumber}, you can't use this robot command here"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                                }
+
                                 return;
                             }
                             if (t.Type != Types.UNDEFINED) return;
@@ -1630,6 +1671,305 @@ namespace DevBots.Services
                         
                     }
                 }
+                //ROBOT
+                else if (tGroup.Count >= 1 && tGroup.ElementAt(0).Type == Types.ROBOT)
+                {
+                    if (tGroup.Count == 1)
+                    {
+                        var token = new RobotCommand();
+                        var tIndex = 0;
+                        switch (tGroup.ElementAt(0).Value)
+                        {
+                            case "MOVE_FORWARD":
+                                if (result.Count != 0)
+                                {
+                                    token = result.LastOrDefault(t => t.CountsAsCommand);
+                                    if (token == null)
+                                    {
+                                        tIndex = 0;
+                                        result[tIndex].Type = "MOVE";
+                                        result[tIndex].Direction = 1;
+                                        result[tIndex].CountsAsCommand = true;
+                                    }
+                                    else
+                                    {
+                                        tIndex = result.LastIndexOf(token);
+                                        if (tIndex == result.Count - 1)
+                                        {
+                                            token = new RobotCommand
+                                            {
+                                                Type = "MOVE", Direction = 1, CountsAsCommand = true
+                                            };
+                                            result.Add(token);
+                                        }
+                                        else
+                                        {
+                                            tIndex++;
+                                            result[tIndex].Type = "MOVE";
+                                            result[tIndex].Direction = 1;
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    token.Type = "MOVE";
+                                    token.Direction = 1;
+                                    token.CountsAsCommand = true;
+                                    result.Add(token);
+                                }
+                                break;
+                            case "MOVE_RIGHT":
+                                if (result.Count != 0)
+                                {
+                                    token = result.LastOrDefault(t => t.CountsAsCommand);
+                                    if (token == null)
+                                    {
+                                        tIndex = 0;
+                                        result[tIndex].Type = "MOVE";
+                                        result[tIndex].Direction = 2;
+                                        result[tIndex].CountsAsCommand = true;
+                                    }
+                                    else
+                                    {
+                                        tIndex = result.LastIndexOf(token);
+                                        if (tIndex == result.Count - 1)
+                                        {
+                                            token = new RobotCommand
+                                            {
+                                                Type = "MOVE", Direction = 2, CountsAsCommand = true
+                                            };
+                                            result.Add(token);
+                                        }
+                                        else
+                                        {
+                                            tIndex++;
+                                            result[tIndex].Type = "MOVE";
+                                            result[tIndex].Direction = 2;
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    token.Type = "MOVE";
+                                    token.Direction = 2;
+                                    token.CountsAsCommand = true;
+                                    result.Add(token);
+                                }
+                                break;
+                            case "MOVE_BACK":
+                                if (result.Count != 0)
+                                {
+                                    token = result.LastOrDefault(t => t.CountsAsCommand);
+                                    if (token == null)
+                                    {
+                                        tIndex = 0;
+                                        result[tIndex].Type = "MOVE";
+                                        result[tIndex].Direction = 3;
+                                        result[tIndex].CountsAsCommand = true;
+                                    }
+                                    else
+                                    {
+                                        tIndex = result.LastIndexOf(token);
+                                        if (tIndex == result.Count - 1)
+                                        {
+                                            token = new RobotCommand
+                                            {
+                                                Type = "MOVE", Direction = 3, CountsAsCommand = true
+                                            };
+                                            result.Add(token);
+                                        }
+                                        else
+                                        {
+                                            tIndex++;
+                                            result[tIndex].Type = "MOVE";
+                                            result[tIndex].Direction = 3;
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    token.Type = "MOVE";
+                                    token.Direction = 3;
+                                    token.CountsAsCommand = true;
+                                    result.Add(token);
+                                }
+                                break;
+                            case "MOVE_LEFT":
+                                if (result.Count != 0)
+                                {
+                                    token = result.LastOrDefault(t => t.CountsAsCommand);
+                                    if (token == null)
+                                    {
+                                        tIndex = 0;
+                                        result[tIndex].Type = "MOVE";
+                                        result[tIndex].Direction = 4;
+                                        result[tIndex].CountsAsCommand = true;
+                                    }
+                                    else
+                                    {
+                                        tIndex = result.LastIndexOf(token);
+                                        if (tIndex == result.Count - 1)
+                                        {
+                                            token = new RobotCommand
+                                            {
+                                                Type = "MOVE", Direction = 4, CountsAsCommand = true
+                                            };
+                                            result.Add(token);
+                                        }
+                                        else
+                                        {
+                                            tIndex++;
+                                            result[tIndex].Type = "MOVE";
+                                            result[tIndex].Direction = 4;
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    token.Type = "MOVE";
+                                    token.Direction = 4;
+                                    token.CountsAsCommand = true;
+                                    result.Add(token);
+                                }
+                                break;
+                            case "ATTACK":
+                                if (result.Count != 0)
+                                {
+                                    token = result.LastOrDefault(t => t.CountsAsCommand);
+                                    if (token == null)
+                                    {
+                                        tIndex = 0;
+                                        result[tIndex].Type = "ATTACK";
+                                        result[tIndex].CountsAsCommand = true;
+                                    }
+                                    else
+                                    {
+                                        tIndex = result.LastIndexOf(token);
+                                        if (tIndex == result.Count - 1)
+                                        {
+                                            token = new RobotCommand
+                                            {
+                                                Type = "ATTACK",
+                                                CountsAsCommand = true
+                                            };
+                                            result.Add(token);
+                                        }
+                                        else
+                                        {
+                                            tIndex++;
+                                            result[tIndex].Type = "ATTACK";
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    token.Type = "ATTACK";
+                                    token.CountsAsCommand = true;
+                                    result.Add(token);
+                                }
+                                break;
+                            default:
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}, robot command not known"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                                return result;
+                        }
+                    }
+                    else if (tGroup.Count == 2)
+                    {
+                        var token = new RobotCommand();
+                        var tIndex = 0;
+                        switch (tGroup.ElementAt(0).Value)
+                        {
+                            case "TURN":
+                                if (tGroup.ElementAt(1).Type == Types.NUMBER)
+                                {
+                                    var turnValue = Convert.ToInt32(tGroup.ElementAt(1).Value);
+                                    if (turnValue != 1 && turnValue != 2 && turnValue != 3 && turnValue != 4)
+                                    {
+                                        result.Add(new RobotCommand
+                                        {
+                                            Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}, after TURN expected direction as 1, 2, 3 or 4"
+                                        });
+                                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                                        return result;
+                                    }
+                                    if (result.Count != 0)
+                                    {
+                                        token = result.LastOrDefault(t => t.CountsAsCommand);
+                                        if (token == null)
+                                        {
+                                            tIndex = 0;
+                                            result[tIndex].Type = "TURN";
+                                            result[tIndex].Direction = turnValue;
+                                            result[tIndex].CountsAsCommand = true;
+                                        }
+                                        else
+                                        {
+                                            tIndex = result.LastIndexOf(token);
+                                            if (tIndex == result.Count - 1)
+                                            {
+                                                token = new RobotCommand
+                                                {
+                                                    Type = "TURN",
+                                                    Direction = turnValue,
+                                                    CountsAsCommand = true
+                                                };
+                                                result.Add(token);
+                                            }
+                                            else
+                                            {
+                                                tIndex++;
+                                                result[tIndex].Type = "TURN";
+                                                result[tIndex].Direction = turnValue;
+                                                result[tIndex].CountsAsCommand = true;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        token.Type = "TURN";
+                                        token.Direction = turnValue;
+                                        token.CountsAsCommand = true;
+                                        result.Add(token);
+                                    }
+                                }
+                                else
+                                {
+                                    result.Add(new RobotCommand
+                                    {
+                                        Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}, after TURN command is expected number"
+                                    });
+                                    _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                                    return result;
+                                }
+                                break;
+                            default:
+                                result.Add(new RobotCommand
+                                {
+                                    Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}, robot command not known"
+                                });
+                                _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                                return result;
+                        }
+                    }
+                    else
+                    {
+                        result.Add(new RobotCommand()
+                        {
+                            Error = $"Syntax error at line {tGroup.ElementAt(0).LineNumber}, ROBOT command can have now only 1 word",
+                        });
+                        _WriteLineWithError((new System.Diagnostics.StackFrame(0, true)).GetFileLineNumber());
+                    }
+                }
+                //ELSE
                 else
                 {
                     result.Add(new RobotCommand
@@ -1768,14 +2108,14 @@ namespace DevBots.Services
                                     Value = "FUNC"
                                 });
                             break;
-                        case "ENDFUNC":
+                        case "END_FUNC":
                             tokens.Add(
                                 new Token
                                 {
                                     Index = tokens.Count,
                                     LineNumber = lineNumber,
-                                    Type = Types.ENDFUNC,
-                                    Value = "ENDFUNC"
+                                    Type = Types.END_FUNC,
+                                    Value = "END_FUNC"
                                 });
                             break;
                         case "PARAMS":
@@ -1798,16 +2138,88 @@ namespace DevBots.Services
                                     Value = "WHILE"
                                 });
                             break;
-                        case "ENDWHILE":
+                        case "END_WHILE":
                             tokens.Add(
                                 new Token
                                 {
                                     Index = tokens.Count,
                                     LineNumber = lineNumber,
-                                    Type = Types.ENDWHILE,
-                                    Value = "ENDWHILE"
+                                    Type = Types.END_WHILE,
+                                    Value = "END_WHILE"
                                 });
                             break;
+                        case "MOVE_FORWARD":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "MOVE_FORWARD"
+                            });
+                            break;
+                        case "MOVE_RIGHT":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "MOVE_RIGHT"
+                            });
+                            break;
+                        case "MOVE_LEFT":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "MOVE_LEFT"
+                            });
+                            break;
+                        case "MOVE_BACK":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "MOVE_BACK"
+                            });
+                            break;
+                        case "ATTACK":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "ATTACK"
+                            });
+                            break;
+                        case "TURN":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "TURN"
+                            });
+                            break;
+                        case "MY_POS_X":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "GET_POS_X"
+                            });
+                                break;
+                        case "MY_POX_Y":
+                            tokens.Add(new Token
+                            {
+                                Index = tokens.Count,
+                                LineNumber = lineNumber,
+                                Type = Types.ROBOT,
+                                Value = "GET_POS_Y"
+                            });
+                                break;
                         case "=":
                             tokens.Add(
                                 new Token
@@ -1938,13 +2350,13 @@ namespace DevBots.Services
                                     Value = word
                                 });
                             break;
-                        case "ENDIF":
+                        case "END_IF":
                             tokens.Add(
                                 new Token
                                 {
                                     Index = tokens.Count,
                                     LineNumber = lineNumber,
-                                    Type = Types.ENDIF,
+                                    Type = Types.END_IF,
                                     Value = word
                                 });
                             break;

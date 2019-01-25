@@ -7,6 +7,6 @@ namespace DevBots.Services.Interfaces
 {
     public interface ILanguageService
     {
-        Responses<RobotCommand> Decode(string scriptPath);
+        Responses<RobotCommand> Decode(long scriptId, long userId);
     }
 }

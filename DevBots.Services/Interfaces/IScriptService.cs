@@ -13,5 +13,6 @@ namespace DevBots.Services.Interfaces
         Task<Response<BaseDto>> AddAsync(ScriptBindingModel scriptBindingModel, string userName);
         Responses<ScriptForListDto> GetToDisplay(long userId);
         Task<Response<BaseDto>> RemoveAsync(long scriptId, long userId);
+        Responses<SimpleObjectDto> GetSimpleByRobotId(long robotId, long userId);
     }
 }

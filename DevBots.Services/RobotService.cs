@@ -18,11 +18,11 @@ namespace DevBots.Services
             _robotRepository = robotRepository;
         }
 
-        public Responses<SimpleRobotDto> GetSimpleRobots()
+        public Responses<SimpleObjectDto> GetSimpleRobots()
         {
-            var result = new Responses<SimpleRobotDto>();
+            var result = new Responses<SimpleObjectDto>();
             var robots = _robotRepository.GetAll();
-            result.Model = Mapper.Map<List<SimpleRobotDto>>(robots);
+            result.Model = Mapper.Map<List<SimpleObjectDto>>(robots);
             return result;
         }
     }

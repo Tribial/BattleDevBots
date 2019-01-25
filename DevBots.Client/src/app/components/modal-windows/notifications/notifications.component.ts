@@ -24,13 +24,13 @@ export class NotificationsComponent implements OnInit, OnChanges {
     },
     {
       id: 3,
-      title: 'Muhamat attacked you',
-      body: 'Muhamat attacked you, you have lost battle',
+      title: 'Alex attacked you',
+      body: 'Alex attacked you, you have lost battle',
     },
     {
       id: 1,
-      title: 'Allah attacked you',
-      body: 'Allah attacked you, you have won the battle and gained 50 points',
+      title: 'Michael attacked you',
+      body: 'Michael attacked you, you have won the battle and gained 50 points',
     },
     {
       id: 2,
@@ -39,13 +39,13 @@ export class NotificationsComponent implements OnInit, OnChanges {
     },
     {
       id: 3,
-      title: 'Muhamat attacked you',
-      body: 'Muhamat attacked you, you have lost battle',
+      title: 'Tommy attacked you',
+      body: 'Tommy attacked you, you have lost battle',
     },
     {
       id: 1,
-      title: 'Allah attacked you',
-      body: 'Allah attacked you, you have won the battle and gained 50 points',
+      title: 'Charlie attacked you',
+      body: 'Charlie attacked you, you have won the battle and gained 50 points',
     },
     {
       id: 2,
@@ -54,13 +54,13 @@ export class NotificationsComponent implements OnInit, OnChanges {
     },
     {
       id: 3,
-      title: 'Muhamat attacked you',
-      body: 'Muhamat attacked you, you have lost battle',
+      title: 'Karol attacked you',
+      body: 'Karol attacked you, you have lost battle',
     },
     {
       id: 1,
-      title: 'Allah attacked you',
-      body: 'Allah attacked you, you have won the battle and gained 50 points',
+      title: 'Victor attacked you',
+      body: 'Victor attacked you, you have won the battle and gained 50 points',
     },
     {
       id: 2,
@@ -69,13 +69,13 @@ export class NotificationsComponent implements OnInit, OnChanges {
     },
     {
       id: 3,
-      title: 'Muhamat attacked you',
-      body: 'Muhamat attacked you, you have lost battle',
+      title: 'Bulbasaur attacked you',
+      body: 'Bulbasaur attacked you, you have lost battle',
     },
     {
       id: 1,
-      title: 'Allah attacked you',
-      body: 'Allah attacked you, you have won the battle and gained 50 points',
+      title: 'Person attacked you',
+      body: 'Person attacked you, you have won the battle and gained 50 points',
     },
     {
       id: 2,
@@ -84,8 +84,8 @@ export class NotificationsComponent implements OnInit, OnChanges {
     },
     {
       id: 3,
-      title: 'Muhamat attacked you',
-      body: 'Muhamat attacked you, you have lost battle',
+      title: 'Jack attacked you',
+      body: 'Jack attacked you, you have lost battle',
     },
   ];
 
@@ -102,6 +102,10 @@ export class NotificationsComponent implements OnInit, OnChanges {
       this.setNotification.emit(this.notifications.length - 1);
       this.notificationSelected = this.notifications.length - 1;
     }
+  }
+
+  select(index) {
+    this.notificationSelected = index;
   }
 
   @HostListener('document:keydown.escape', ['$event'])

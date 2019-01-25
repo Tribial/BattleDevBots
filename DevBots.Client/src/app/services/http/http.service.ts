@@ -11,6 +11,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { Command } from 'src/app/models/command.model';
 import { SimpleRobot } from 'src/app/models/simple-robot.model';
 import { Script } from 'src/app/models/script.model';
+import { SimpleScript } from 'src/app/models/simple-script.model';
 
 const api = 'https://localhost:44397/api/';
 const httpOptions = {
@@ -54,8 +55,8 @@ export class HttpService {
   }
 
   //SCRIPTS
-  public runScript() {
-    return this._http.get<ResponseModel<Command[]>>(api + 'Language/Decode', {headers: this._getHeaders()});
+  public runScript(scriptId: number) {
+    return this._http.get<ResponseModel<Command[]>>(`${api}Language/Decode/${scriptId}`, {headers: this._getHeaders()});
   }
 
   public addScript(name: string, robotId: number, script: string) {
@@ -68,6 +69,10 @@ export class HttpService {
 
   public removeScript(scriptId: number) {
     return this._http.delete<ResponseModel<Empty>>(`${api}Script/${scriptId}`, {headers: this._getHeaders()});
+  }
+
+  public getSimpleScriptsByRobot(robotId: number) {
+    return this._http.get<ResponseModel<SimpleScript[]>>(`${api}Script/Simple/${robotId}`, {headers: this._getHeaders()});
   }
   //ROBOTS
   public getSimpleRobots(): Observable<ResponseModel<SimpleRobot[]>> {

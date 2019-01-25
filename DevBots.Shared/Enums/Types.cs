@@ -13,7 +13,7 @@ namespace DevBots.Shared.Enums
         LET,
         EQUALS,
         FUNC,
-        ENDFUNC,
+        END_FUNC,
         PARAMS,
         COMPARE,
         BOOLEAN,
@@ -21,10 +21,11 @@ namespace DevBots.Shared.Enums
         IF,
         ELSE,
         THEN,
-        ENDIF,
+        END_IF,
         NEWLINE,
         UNDEFINED,
         WHILE,
-        ENDWHILE
+        END_WHILE,
+        ROBOT,
     }
 }

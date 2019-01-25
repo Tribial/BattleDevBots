@@ -31,6 +31,10 @@
         }
     }
 
+    .notification:hover {
+        cursor: pointer;
+    }
+
     .selected {
         background-color: indigo !important;
 

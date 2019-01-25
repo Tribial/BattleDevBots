@@ -37,7 +37,9 @@ namespace DevBots.Services
 
                 config.CreateMap<User, LoginDto>();
 
-                config.CreateMap<Robot, SimpleRobotDto>();
+                config.CreateMap<Robot, SimpleObjectDto>();
+
+                config.CreateMap<Script, SimpleObjectDto>();
 
                 config.CreateMap<Script, ScriptForListDto>()
                     .ForMember(dest => dest.ForBot, opt => opt.MapFrom(src => src.ForRobot.Name))

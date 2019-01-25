@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Script } from 'src/app/models/script.model';
-import { MatIconRegistry } from '@angular/material';
+import { MatIconRegistry, MatSort, MatTableDataSource } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { HttpService } from 'src/app/services/http/http.service';
@@ -19,7 +19,8 @@ export class ScriptsPageComponent implements OnInit, OnDestroy {
   public displayedColumns = ['name', 'lastUpdate', 'forBot', 'lines', 'actions'];
   public showAddScript: boolean = false;
   public isLoading: boolean = true;
-
+  public dataSource = new MatTableDataSource(this.scripts);
+  @ViewChild(MatSort) sort: MatSort;
   private _subscriptions: Subscription[] = [];
 
   constructor(private _messageService: MessageService, private _router: Router, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer, private _httpService: HttpService, private _authService: AuthService) {
@@ -36,6 +37,7 @@ export class ScriptsPageComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.getScripts();
+    this.dataSource.sort = this.sort;
   }
 
   removeScript(scriptId: number) {
@@ -83,6 +85,7 @@ export class ScriptsPageComponent implements OnInit, OnDestroy {
             //s.lastUpdate.toLocaleTimeString
             s.lastUpdate = new Date(s.lastUpdate.getFullYear(), s.lastUpdate.getMonth(), s.lastUpdate.getDate(), s.lastUpdate.getHours(), s.lastUpdate.getMinutes(), s.lastUpdate.getSeconds());
           })
+          this.dataSource = new MatTableDataSource(this.scripts);
           this.isLoading = false;
         },
         error => {

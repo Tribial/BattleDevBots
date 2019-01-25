@@ -4,7 +4,7 @@ using System.Text;
 
 namespace DevBots.Shared.DtoModels
 {
-    public class SimpleRobotDto : BaseDto
+    public class SimpleObjectDto : BaseDto
     {
         public long Id { get; set; }
         public string Name { get; set; }

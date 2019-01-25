@@ -12,5 +12,6 @@ namespace DevBots.Data.Interfaces
         List<Script> GetByUser(long userId);
         Task<bool> RemoveAsync(Script script);
         Script Get(Func<Script, bool> func);
+        List<Script> GetBy(Func<Script, bool> func);
     }
 }

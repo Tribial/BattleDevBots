@@ -137,5 +137,13 @@ namespace DevBots.Services
 
             return result;
         }
+
+        public Responses<SimpleObjectDto> GetSimpleByRobotId(long robotId, long userId)
+        {
+            var result = new Responses<SimpleObjectDto>();
+            var scripts = _scriptRepository.GetBy(s => s.ForRobot.Id == robotId && s.Owner.UserId == userId);
+            result.Model = Mapper.Map<List<SimpleObjectDto>>(scripts);
+            return result;
+        }
     }
 }

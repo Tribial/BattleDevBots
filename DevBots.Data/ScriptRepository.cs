@@ -38,7 +38,12 @@ namespace DevBots.Data
 
         public Script Get(Func<Script, bool> func)
         {
-            return _db.Scripts.Include(s => s.Owner).FirstOrDefault(func);
+            return _db.Scripts.Include(s => s.Owner).Include(s => s.ForRobot).FirstOrDefault(func);
+        }
+
+        public List<Script> GetBy(Func<Script, bool> func)
+        {
+            return _db.Scripts.Include(s => s.Owner).Include(s => s.ForRobot).Where(func).ToList();
         }
 
         private async Task<bool> _saveAsync()
